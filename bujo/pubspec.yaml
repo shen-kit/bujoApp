@@ -30,6 +30,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  font_awesome_flutter:
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -73,17 +75,38 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
+  fonts:
+    - family: Oregano
+      fonts:
+        - asset: assets/fonts/Oregano-Regular.ttf
+        - asset: assets/fonts/Oregano-Italic.ttf
+          style: italic
+    - family: Garamond
+      fonts:
+        - asset: assets/fonts/Garamond-Regular.ttf
+        - asset: assets/fonts/Garamond-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Garamond-Light.ttf
+          weight: 200
+        - asset: assets/fonts/Garamond-LightItalic.ttf
+          style: italic
+        - asset: assets/fonts/Garamond-Medium.ttf
+          weight: 300
+        - asset: assets/fonts/Garamond-MediumItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/Garamond-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Garamond-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Garamond-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Garamond-BoldItalic.ttf
+          weight: 700
+          style: italic
+        
+        
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
