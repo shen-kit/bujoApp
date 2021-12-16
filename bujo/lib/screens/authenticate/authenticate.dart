@@ -1,3 +1,4 @@
+import 'package:bujo/shared/get_text_size.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bujo/screens/authenticate/sign_in.dart';
@@ -95,14 +96,26 @@ class _AuthenticateState extends State<Authenticate> {
                         ),
                         AnimatedAlign(
                           alignment: _signIn
-                              ? const Alignment(-0.9, 1)
-                              : const Alignment(0.85, 1),
+                              ? const Alignment(-1, 1)
+                              : const Alignment(1, 1),
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.decelerate,
-                          child: Container(
-                            color: const Color(0xff40CDC5),
-                            width: 60,
-                            height: 1,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Container(
+                              color: const Color(0xff40CDC5),
+                              width: _signIn
+                                  ? getTextSize(
+                                      'Sign In',
+                                      const TextStyle(fontSize: 20),
+                                    ).width
+                                  : getTextSize(
+                                      'Register',
+                                      const TextStyle(fontSize: 20),
+                                    ).width,
+                              height: 1,
+                            ),
                           ),
                         ),
                       ],
