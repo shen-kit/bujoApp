@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:bujo/screens/logged_in/logged_in.dart';
-import 'package:bujo/screens/authenticate/authenticate.dart';
+// import 'package:bujo/screens/authenticate/authenticate.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(

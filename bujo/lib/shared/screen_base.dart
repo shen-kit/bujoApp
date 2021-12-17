@@ -59,7 +59,6 @@ Widget screenBase({
         child: Container(
           width: double.infinity,
           height: 400,
-          padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
             color: Color(0xff000C35),
             borderRadius: BorderRadius.vertical(top: Radius.circular(30)),

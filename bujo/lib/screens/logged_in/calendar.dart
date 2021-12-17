@@ -17,8 +17,11 @@ class _CalendarState extends State<Calendar> {
         title: 'Calendar',
         subtitle: 'Thursday, 16th December 2021',
         settings: true,
-        mainContent: Column(
-          children: [],
+        mainContent: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+              // children: [],
+              ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

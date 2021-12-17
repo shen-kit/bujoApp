@@ -49,7 +49,7 @@ class _SignInState extends State<SignIn> {
                   children: const [
                     Icon(
                       Icons.email,
-                      color: Color(0xFFbfd5ff),
+                      color: Color(0x40FFFFFF),
                     ),
                     SizedBox(width: 10),
                     Text('Sign In'),

@@ -17,8 +17,11 @@ class _HabitsState extends State<Habits> {
         title: 'Habits',
         subtitle: 'Every action is a vote for who you will become',
         settings: true,
-        mainContent: Column(
-          children: [],
+        mainContent: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+              // children: [],
+              ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
