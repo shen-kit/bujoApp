@@ -37,27 +37,17 @@ class _DailyHabitsState extends State<DailyHabits> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xff000C35),
-      body: ListView.separated(
-        itemCount: 3,
-        itemBuilder: (context, i) {
-          return HabitCard(
-            habit: 'Cold Shower',
-            status: status,
-            cycleStatus: cycleHabitStatus,
-            toggleHabitToday: toggleHabitToday,
-          );
-        },
-        separatorBuilder: (context, i) => const SizedBox(height: 10),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(
-          Icons.add,
-          size: 36,
-        ),
-      ),
+    return ListView.separated(
+      itemCount: 3,
+      itemBuilder: (context, i) {
+        return HabitCard(
+          habit: 'Cold Shower',
+          status: status,
+          cycleStatus: cycleHabitStatus,
+          toggleHabitToday: toggleHabitToday,
+        );
+      },
+      separatorBuilder: (context, i) => const SizedBox(height: 10),
     );
   }
 }
@@ -159,11 +149,8 @@ class HabitCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Text(
                   habit,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
-                    // decoration: status == HabitStates.done
-                    //     ? TextDecoration.lineThrough
-                    //     : null,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 3,
