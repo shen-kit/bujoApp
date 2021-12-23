@@ -27,6 +27,7 @@ class _AuthenticateState extends State<Authenticate> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: screenBase(
+        context: context,
         title: 'Bullet Journal',
         subtitle: 'Stay on top of your life',
         settings: true,

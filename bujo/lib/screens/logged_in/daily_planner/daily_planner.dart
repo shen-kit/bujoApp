@@ -22,6 +22,7 @@ class _DailyPlannerState extends State<DailyPlanner> {
   @override
   Widget build(BuildContext context) {
     return screenBase(
+      context: context,
       title: 'My Day',
       subtitle: 'Make the most of it',
       settings: true,

@@ -1,6 +1,8 @@
+import 'package:bujo/screens/logged_in/settings.dart';
 import 'package:flutter/material.dart';
 
 Widget screenBase({
+  required BuildContext context,
   required String title,
   required String subtitle,
   required bool settings,
@@ -38,16 +40,26 @@ Widget screenBase({
                   ),
                 ),
               ),
-              Visibility(
-                visible: settings,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.settings,
-                      size: 36,
-                    ),
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () {
+                    if (settings) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SafeArea(
+                            child: Settings(),
+                          ),
+                        ),
+                      );
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: Icon(
+                    settings ? Icons.settings : Icons.cancel_outlined,
+                    size: 36,
                   ),
                 ),
               ),

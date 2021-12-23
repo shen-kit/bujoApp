@@ -17,6 +17,7 @@ class _CalendarState extends State<Calendar> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: screenBase(
+        context: context,
         title: 'Calendar',
         subtitle: 'Thursday, 16th December 2021',
         settings: true,

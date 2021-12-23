@@ -17,6 +17,7 @@ class _HabitsState extends State<Habits> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: screenBase(
+        context: context,
         title: 'Habits',
         subtitle: 'Every action is a vote for who you will become',
         settings: true,
