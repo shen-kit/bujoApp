@@ -1,3 +1,4 @@
+import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/habit.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,83 @@ class Habits extends StatefulWidget {
 class _HabitsState extends State<Habits> {
   @override
   Widget build(BuildContext context) {
+    void showEditPanel(HabitInfo? habit) {
+      TextEditingController habitNameController =
+          TextEditingController(text: habit != null ? habit.name : '');
+      TextEditingController habitDescriptionController =
+          TextEditingController(text: habit != null ? habit.description : '');
+
+      bool habitFinished = habit == null ? false : habit.endDate != null;
+
+      showBottomEditBar(
+        context,
+        Form(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                habit == null ? 'New Habit' : 'Edit Habit',
+                style: headerStyle,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: habitNameController,
+                validator: (val) =>
+                    val!.isEmpty ? 'Name can\'t be empty' : null,
+                decoration: textInputDecoration.copyWith(labelText: 'Name'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: habitDescriptionController,
+                validator: (val) =>
+                    val!.isEmpty ? 'Description can\'t be empty' : null,
+                decoration:
+                    textInputDecoration.copyWith(labelText: 'Description'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+              habitFinished
+                  ? SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        label: const Text('Delete'),
+                        icon: const Icon(Icons.delete),
+                        style: ElevatedButton.styleFrom(
+                          primary: const Color(0xffA72727),
+                        ),
+                      ),
+                    )
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Stop'),
+                        style: ElevatedButton.styleFrom(
+                          primary: const Color(0xffA72727),
+                        ),
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: screenBase(
         context: context,
@@ -32,7 +110,7 @@ class _HabitsState extends State<Habits> {
               HabitCard(
                 habit: HabitInfo(
                   name: 'Chinese',
-                  requirement: 'Practice Chinese for 5 minutes',
+                  description: 'Practice Chinese for 5 minutes',
                   streak: 13,
                   completed: 58,
                   failed: 12,
@@ -40,11 +118,12 @@ class _HabitsState extends State<Habits> {
                   startDate: HabitDate(2021, 11, 1),
                   endDate: null,
                 ),
+                showEditPanel: showEditPanel,
               ),
               HabitCard(
                 habit: HabitInfo(
                   name: 'Cold Shower',
-                  requirement: 'Practice Chinese for 5 minutes',
+                  description: 'Practice Chinese for 5 minutes',
                   streak: 13,
                   completed: 58,
                   failed: 12,
@@ -52,11 +131,12 @@ class _HabitsState extends State<Habits> {
                   startDate: HabitDate(2021, 11, 1),
                   endDate: null,
                 ),
+                showEditPanel: showEditPanel,
               ),
               HabitCard(
                 habit: HabitInfo(
                   name: 'Morning Exercise',
-                  requirement: 'Practice Chinese for 5 minutes',
+                  description: 'Practice Chinese for 5 minutes',
                   streak: 13,
                   completed: 58,
                   failed: 12,
@@ -64,11 +144,12 @@ class _HabitsState extends State<Habits> {
                   startDate: HabitDate(2021, 11, 1),
                   endDate: null,
                 ),
+                showEditPanel: showEditPanel,
               ),
               HabitCard(
                 habit: HabitInfo(
                   name: 'Afternoon Exercise',
-                  requirement: 'Practice Chinese for 5 minutes',
+                  description: 'Practice Chinese for 5 minutes',
                   streak: 13,
                   completed: 58,
                   failed: 12,
@@ -76,6 +157,7 @@ class _HabitsState extends State<Habits> {
                   startDate: HabitDate(2021, 11, 1),
                   endDate: null,
                 ),
+                showEditPanel: showEditPanel,
               ),
               const SizedBox(height: 20),
               Text(
@@ -85,21 +167,22 @@ class _HabitsState extends State<Habits> {
               HabitCard(
                 habit: HabitInfo(
                   name: 'No Artificial Sugar',
-                  requirement: 'Practice Chinese for 5 minutes',
+                  description: 'Practice Chinese for 5 minutes',
                   streak: 13,
                   completed: 58,
                   failed: 12,
                   excused: 3,
                   startDate: HabitDate(2021, 11, 1),
-                  endDate: null,
+                  endDate: HabitDate(2021, 12, 31),
                 ),
+                showEditPanel: showEditPanel,
               ),
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => showEditPanel(null),
         child: const Icon(
           Icons.add,
           size: 36,
@@ -113,9 +196,11 @@ class HabitCard extends StatelessWidget {
   const HabitCard({
     Key? key,
     required this.habit,
+    required this.showEditPanel,
   }) : super(key: key);
 
   final HabitInfo habit;
+  final Function showEditPanel;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +208,7 @@ class HabitCard extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       child: TextButton(
         onPressed: () {},
+        onLongPress: () => showEditPanel(habit),
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -149,7 +235,7 @@ class HabitCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    habit.requirement,
+                    habit.description,
                     style: const TextStyle(fontSize: 12),
                   ),
                 ],

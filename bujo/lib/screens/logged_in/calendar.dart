@@ -1,3 +1,4 @@
+import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/event.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +14,119 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
+  TextEditingController eventNameController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    void showEditPanel({EventInfo? event}) async {
+      TextEditingController eventNameController = TextEditingController(
+        text: (event != null) ? event.name : '',
+      );
+      TextEditingController locationController = TextEditingController(
+        text: (event != null) ? event.location : '',
+      );
+
+      Future<TimeOfDay?> _getTime(TimeOfDay initialTime) async =>
+          showTimePicker(
+            context: context,
+            initialTime: initialTime,
+          );
+
+      Future<DateTime?> _getDate(DateTime initialDate) async => showDatePicker(
+            context: context,
+            initialDate: initialDate,
+            firstDate: DateTime(2021),
+            lastDate: DateTime(2500),
+          );
+
+      String date = (event != null)
+          ? '${event.date.date}/${event.date.month}/${event.date.year}'
+          : 'Choose Date';
+      EventTime startTime = (event != null) ? event.startTime : EventTime(0, 0);
+      EventTime endTime = (event != null) ? event.endTime : EventTime(0, 0);
+
+      showBottomEditBar(
+        context,
+        Form(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                event == null ? 'New Event' : 'Edit Event',
+                style: headerStyle,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: eventNameController,
+                validator: (val) =>
+                    val!.isEmpty ? 'Name can\'t be empty' : null,
+                decoration:
+                    textInputDecoration.copyWith(labelText: 'Event name'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: locationController,
+                decoration: textInputDecoration.copyWith(labelText: 'Location'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => _getDate(event != null
+                        ? DateTime(
+                            event.date.year, event.date.month, event.date.date)
+                        : DateTime.now()),
+                    child: Text(date),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          /*TimeOfDay? newTime =*/ await _getTime(
+                            event != null
+                                ? TimeOfDay(
+                                    hour: event.startTime.hour,
+                                    minute: event.startTime.minute)
+                                : const TimeOfDay(hour: 0, minute: 0),
+                          );
+                        },
+                        child: Text(formatEventTime(startTime)),
+                      ),
+                      const Text('–'),
+                      TextButton(
+                        onPressed: () async {
+                          /* TimeOfDay? newTime =*/ await _getTime(event != null
+                              ? TimeOfDay(
+                                  hour: event.endTime.hour,
+                                  minute: event.endTime.minute)
+                              : const TimeOfDay(hour: 0, minute: 0));
+                        },
+                        child: Text(formatEventTime(endTime)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: screenBase(
         context: context,
@@ -28,17 +140,20 @@ class _CalendarState extends State<Calendar> {
               DateEvents(
                 date: '19/12',
                 day: 'Sun',
+                showEditPanel: showEditPanel,
                 events: [
                   EventInfo(
                     name: 'Squash w/ Reuben',
-                    startTime: EventTime(2021, 12, 19, 14, 0),
-                    endTime: EventTime(2021, 12, 19, 16, 0),
+                    date: EventDate(year: 2021, month: 12, date: 19),
+                    startTime: EventTime(14, 0),
+                    endTime: EventTime(16, 0),
                     location: 'Leeming Striker',
                   ),
                   EventInfo(
                     name: 'Carols in the Park',
-                    startTime: EventTime(2021, 12, 19, 18, 30),
-                    endTime: EventTime(2021, 12, 19, 19, 30),
+                    date: EventDate(year: 2021, month: 12, date: 19),
+                    startTime: EventTime(19, 0),
+                    endTime: EventTime(21, 30),
                     location: 'Gemmell Park',
                   ),
                 ],
@@ -46,11 +161,13 @@ class _CalendarState extends State<Calendar> {
               DateEvents(
                 date: '20/12',
                 day: 'Mon',
+                showEditPanel: showEditPanel,
                 events: [
                   EventInfo(
                     name: 'Spiderman w/ Khush/Sy/Jere',
-                    startTime: EventTime(2021, 12, 19, 14, 0),
-                    endTime: EventTime(2021, 12, 19, 16, 0),
+                    date: EventDate(year: 2021, month: 12, date: 20),
+                    startTime: EventTime(11, 15),
+                    endTime: EventTime(15, 30),
                     location: 'Carousel Hoyts',
                   ),
                 ],
@@ -70,7 +187,7 @@ class _CalendarState extends State<Calendar> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: showEditPanel,
         child: const Icon(
           Icons.add,
           size: 36,
@@ -85,15 +202,22 @@ class DateEvents extends StatelessWidget {
     Key? key,
     required this.date,
     required this.day,
+    required this.showEditPanel,
     required this.events,
   }) : super(key: key);
 
   final String date;
   final String day;
   final List<EventInfo> events;
+  final Function showEditPanel;
 
   List<EventCard> _generateEventCards() {
-    return events.map((event) => EventCard(event: event)).toList();
+    return events
+        .map((event) => EventCard(
+              event: event,
+              showEditPanel: showEditPanel,
+            ))
+        .toList();
   }
 
   @override
@@ -116,17 +240,11 @@ class EventCard extends StatelessWidget {
   const EventCard({
     Key? key,
     required this.event,
+    required this.showEditPanel,
   }) : super(key: key);
 
   final EventInfo event;
-
-  String _formatEventTime(EventTime time) {
-    bool am = time.hour <= 12;
-    String hour = am ? time.hour.toString() : (time.hour - 12).toString();
-    String minute =
-        time.minute == 0 ? '' : time.minute.toString().padRight(2, '0');
-    return '$hour${minute == '' ? '' : ':$minute'}${am ? 'am' : 'pm'}';
-  }
+  final Function showEditPanel;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +252,7 @@ class EventCard extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       child: TextButton(
         onPressed: () {},
+        onLongPress: () => showEditPanel(event: event),
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -164,7 +283,7 @@ class EventCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          '${_formatEventTime(event.startTime)}-${_formatEventTime(event.endTime)}',
+                          eventTimeToString(event),
                           textAlign: TextAlign.right,
                           style: const TextStyle(fontSize: 11),
                           overflow: TextOverflow.ellipsis,

@@ -1,6 +1,6 @@
 class HabitInfo {
   final String name;
-  final String requirement;
+  final String description;
   final int streak;
   final int completed;
   final int failed;
@@ -10,7 +10,7 @@ class HabitInfo {
 
   HabitInfo({
     required this.name,
-    required this.requirement,
+    required this.description,
     required this.streak,
     required this.completed,
     required this.failed,

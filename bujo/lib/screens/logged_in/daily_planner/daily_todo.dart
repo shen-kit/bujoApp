@@ -1,3 +1,4 @@
+import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -15,22 +16,61 @@ class _DailyTodoState extends State<DailyTodo> {
 
   @override
   Widget build(BuildContext context) {
+    void showEditPanel({String? name}) {
+      TextEditingController todoNameController =
+          TextEditingController(text: name ?? '');
+
+      showBottomEditBar(
+        context,
+        Form(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                name == null ? 'New To-Do' : 'Edit To-Do',
+                style: headerStyle,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: todoNameController,
+                validator: (val) =>
+                    val!.isEmpty ? 'To-Do can\'t be empty' : null,
+                decoration: textInputDecoration.copyWith(labelText: 'To-Do'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xff000C35),
       body: ListView.separated(
         itemCount: 3,
         itemBuilder: (context, i) {
           return TodoCard(
-            todo: 'Find Spec OT Lee Textbook',
+            todo: 'Do Stuff',
             done: _done,
             toggleDone: toggleDone,
+            showEditPanel: showEditPanel,
           );
         },
         separatorBuilder: (BuildContext context, int index) =>
             const SizedBox(height: 10),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: showEditPanel,
         child: const Icon(
           Icons.add,
           size: 36,
@@ -46,16 +86,19 @@ class TodoCard extends StatelessWidget {
     required this.todo,
     required this.done,
     required this.toggleDone,
+    required this.showEditPanel,
   }) : super(key: key);
 
   final String todo;
   final bool done;
   final Function toggleDone;
+  final Function showEditPanel;
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () => toggleDone(),
+      onLongPress: () => showEditPanel(name: todo),
       style: TextButton.styleFrom(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

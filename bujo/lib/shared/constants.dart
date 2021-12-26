@@ -3,6 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 TextStyle headerStyle = GoogleFonts.handlee(fontSize: 20);
 
+const textInputDecoration = InputDecoration(
+    // fillColor: Colors.white,
+    // filled: true,
+    // enabledBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Colors.white, width: 2.0),
+    // ),
+    // focusedBorder: OutlineInputBorder(
+    //   borderSide: BorderSide(color: Colors.blue, width: 2.0),
+    // ),
+    // hintStyle: TextStyle(color: Colors.black54),
+    );
+
+const textInputStyle = TextStyle(); //color: Colors.black);
+
 enum HabitStates { future, done, failed, excused, notToday }
 
 class CheckboxColors {
