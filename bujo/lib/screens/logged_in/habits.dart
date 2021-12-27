@@ -4,6 +4,7 @@ import 'package:bujo/shared/habit.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bujo/shared/screen_base.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class Habits extends StatefulWidget {
@@ -21,8 +22,6 @@ class _HabitsState extends State<Habits> {
           TextEditingController(text: habit != null ? habit.name : '');
       TextEditingController habitDescriptionController =
           TextEditingController(text: habit != null ? habit.description : '');
-
-      bool habitFinished = habit == null ? false : habit.endDate != null;
 
       showBottomEditBar(
         context,
@@ -61,32 +60,6 @@ class _HabitsState extends State<Habits> {
                   child: const Text('Save'),
                 ),
               ),
-              habitFinished
-                  ? SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        label: const Text('Delete'),
-                        icon: const Icon(Icons.delete),
-                        style: ElevatedButton.styleFrom(
-                          primary: const Color(0xffA72727),
-                        ),
-                      ),
-                    )
-                  : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Stop'),
-                        style: ElevatedButton.styleFrom(
-                          primary: const Color(0xffA72727),
-                        ),
-                      ),
-                    ),
             ],
           ),
         ),
@@ -204,88 +177,109 @@ class HabitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: TextButton(
-        onPressed: () {},
-        onLongPress: () => showEditPanel(habit),
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          backgroundColor: const Color(0x38ffffff),
-          primary: Colors.white,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+      width: double.infinity,
+      clipBehavior: Clip.hardEdge,
+      child: Slidable(
+        key: UniqueKey(),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.2,
           children: [
-            SizedBox(
-              width: (MediaQuery.of(context).size.width - 60) * 3 / 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    habit.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    habit.description,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: (MediaQuery.of(context).size.width - 60) * 1 / 5,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        habit.streak.toString(),
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                      const SizedBox(width: 5),
-                      const FaIcon(
-                        FontAwesomeIcons.fire,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        (habit.completed /
-                                (habit.completed + habit.failed) *
-                                100)
-                            .toString()
-                            .substring(0, 4),
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(width: 5),
-                      const FaIcon(
-                        FontAwesomeIcons.percent,
-                        size: 12,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            habit.endDate != null
+                ? SlidableAction(
+                    icon: Icons.delete,
+                    backgroundColor: Colors.red,
+                    onPressed: (context) {},
+                  )
+                : SlidableAction(
+                    icon: Icons.flag_rounded,
+                    backgroundColor: Colors.red,
+                    onPressed: (context) {},
+                  )
           ],
+        ),
+        child: TextButton(
+          onPressed: () {},
+          onLongPress: () => showEditPanel(habit),
+          style: TextButton.styleFrom(
+            shape: const RoundedRectangleBorder(), // set border radius = 0
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            backgroundColor: const Color(0x38ffffff),
+            primary: Colors.white,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 60) * 3 / 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      habit.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      habit.description,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 60) * 1 / 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          habit.streak.toString(),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        const SizedBox(width: 5),
+                        const FaIcon(
+                          FontAwesomeIcons.fire,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          (habit.completed /
+                                  (habit.completed + habit.failed) *
+                                  100)
+                              .toString()
+                              .substring(0, 4),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(width: 5),
+                        const FaIcon(
+                          FontAwesomeIcons.percent,
+                          size: 12,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -3,6 +3,8 @@ import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/event.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class DailyEvents extends StatefulWidget {
   const DailyEvents({Key? key}) : super(key: key);
@@ -35,11 +37,21 @@ class _DailyEventsState extends State<DailyEvents> {
             lastDate: DateTime(2500),
           );
 
-      String date = (event != null)
-          ? '${event.date.date}/${event.date.month}/${event.date.year}'
-          : 'Choose Date';
-      EventTime startTime = (event != null) ? event.startTime : EventTime(0, 0);
-      EventTime endTime = (event != null) ? event.endTime : EventTime(0, 0);
+      String date;
+      EventTime startTime;
+      EventTime endTime;
+
+      if (event != null) {
+        DateTime dateTimeDate =
+            DateTime(event.date.year, event.date.month, event.date.date);
+        date = DateFormat('EEE, d MMM y').format(dateTimeDate);
+        startTime = event.startTime;
+        endTime = event.endTime;
+      } else {
+        date = 'Choose Date';
+        startTime = EventTime(0, 0);
+        endTime = EventTime(0, 0);
+      }
 
       showBottomEditBar(
         context,
@@ -164,68 +176,85 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: () {},
-      onLongPress: () => showEditPanel(event: event),
-      style: TextButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.zero,
-        backgroundColor: const Color(0x38ffffff),
-        fixedSize: const Size(double.infinity, 55),
-      ),
-      child: Container(
-        width: double.infinity,
-        height: 57,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Stack(
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+      width: double.infinity,
+      height: 55,
+      clipBehavior: Clip.hardEdge,
+      child: Slidable(
+        key: UniqueKey(),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.2,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: (MediaQuery.of(context).size.width - 40) * (3 / 5),
-                child: Text(
-                  event.name,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.topRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    eventTimeToString(event),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(
-                    FontAwesomeIcons.solidClock,
-                    size: 16,
-                  )
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    event.location,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(
-                    Icons.location_on,
-                    size: 16,
-                  )
-                ],
-              ),
+            SlidableAction(
+              icon: Icons.delete,
+              backgroundColor: Colors.red,
+              onPressed: (context) {},
             ),
           ],
+        ),
+        child: TextButton(
+          onPressed: () {},
+          onLongPress: () => showEditPanel(event: event),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            backgroundColor: const Color(0x38ffffff),
+            shape: const RoundedRectangleBorder(), // set border radius = 0
+          ),
+          child: Container(
+            width: double.infinity,
+            height: 57,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: (MediaQuery.of(context).size.width - 40) * (3 / 5),
+                    child: Text(
+                      event.name,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        eventTimeToString(event),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(
+                        FontAwesomeIcons.solidClock,
+                        size: 16,
+                      )
+                    ],
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        event.location,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(
+                        Icons.location_on,
+                        size: 16,
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

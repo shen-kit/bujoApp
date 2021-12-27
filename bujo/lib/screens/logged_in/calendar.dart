@@ -4,7 +4,9 @@ import 'package:bujo/shared/event.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bujo/shared/screen_base.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 class Calendar extends StatefulWidget {
   const Calendar({Key? key}) : super(key: key);
@@ -40,11 +42,21 @@ class _CalendarState extends State<Calendar> {
             lastDate: DateTime(2500),
           );
 
-      String date = (event != null)
-          ? '${event.date.date}/${event.date.month}/${event.date.year}'
-          : 'Choose Date';
-      EventTime startTime = (event != null) ? event.startTime : EventTime(0, 0);
-      EventTime endTime = (event != null) ? event.endTime : EventTime(0, 0);
+      String date;
+      EventTime startTime;
+      EventTime endTime;
+
+      if (event != null) {
+        DateTime dateTimeDate =
+            DateTime(event.date.year, event.date.month, event.date.date);
+        date = DateFormat('EEE, d MMM y').format(dateTimeDate);
+        startTime = event.startTime;
+        endTime = event.endTime;
+      } else {
+        date = 'Choose Date';
+        startTime = EventTime(0, 0);
+        endTime = EventTime(0, 0);
+      }
 
       showBottomEditBar(
         context,
@@ -248,77 +260,92 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: TextButton(
-        onPressed: () {},
-        onLongPress: () => showEditPanel(event: event),
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          backgroundColor: const Color(0x38ffffff),
-          primary: Colors.white,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+      width: double.infinity,
+      clipBehavior: Clip.hardEdge,
+      child: Slidable(
+        key: UniqueKey(),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: 0.2,
           children: [
-            SizedBox(
-              width: (MediaQuery.of(context).size.width - 60) * 11 / 20,
-              child: Text(
-                event.name,
-                style: const TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis,
-                // maxLines: 2,
-              ),
-            ),
-            SizedBox(
-              width: (MediaQuery.of(context).size.width - 60) * 8 / 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          eventTimeToString(event),
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontSize: 11),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      const FaIcon(
-                        FontAwesomeIcons.solidClock,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          event.location,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontSize: 11),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            SlidableAction(
+              icon: Icons.delete,
+              backgroundColor: Colors.red,
+              onPressed: (context) {},
             ),
           ],
+        ),
+        child: TextButton(
+          onPressed: () {},
+          onLongPress: () => showEditPanel(event: event),
+          style: TextButton.styleFrom(
+            shape: const RoundedRectangleBorder(), // set border radius = 0
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            backgroundColor: const Color(0x38ffffff),
+            primary: Colors.white,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 60) * 11 / 20,
+                child: Text(
+                  event.name,
+                  style: const TextStyle(fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                  // maxLines: 2,
+                ),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 60) * 8 / 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            eventTimeToString(event),
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const FaIcon(
+                          FontAwesomeIcons.solidClock,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            event.location,
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.location_on,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
