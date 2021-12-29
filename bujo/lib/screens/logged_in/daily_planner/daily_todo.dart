@@ -2,7 +2,6 @@ import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class DailyTodo extends StatefulWidget {
   const DailyTodo({Key? key}) : super(key: key);
@@ -13,6 +12,8 @@ class DailyTodo extends StatefulWidget {
 
 class _DailyTodoState extends State<DailyTodo> {
   bool _done = false;
+
+  final int todoCount = 3;
 
   void toggleDone() => setState(() => _done = !_done);
 
@@ -59,14 +60,16 @@ class _DailyTodoState extends State<DailyTodo> {
     return Scaffold(
       backgroundColor: const Color(0xff000C35),
       body: ListView.separated(
-        itemCount: 3,
+        itemCount: todoCount + 1,
         itemBuilder: (context, i) {
-          return TodoCard(
-            todo: 'Do Stuff',
-            done: _done,
-            toggleDone: toggleDone,
-            showEditPanel: showEditPanel,
-          );
+          return i < todoCount
+              ? TodoCard(
+                  todo: 'Do Stuff',
+                  done: _done,
+                  toggleDone: toggleDone,
+                  showEditPanel: showEditPanel,
+                )
+              : const SizedBox(height: 45);
         },
         separatorBuilder: (BuildContext context, int index) =>
             const SizedBox(height: 10),

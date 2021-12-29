@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "296595771623",
+    "project_id": "bullet-journal-3d63d",
+    "storage_bucket": "bullet-journal-3d63d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296595771623:android:8d23f00babf5933f8a9242",
+        "android_client_info": {
+          "package_name": "com.shenkit.bujo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "296595771623-1vag1bmus8ki8hf6ubqkc8go8los6jjg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shenkit.bujo",
+            "certificate_hash": "1a146aae4a6aeb519660834a6ab6c01bff482dc4"
+          }
+        },
+        {
+          "client_id": "296595771623-97d5le43h45ubjtbtg7a1fd6tqch45ho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSHsoLZXH5lEMlZJ1lRujyAXN4kPm87bU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "296595771623-97d5le43h45ubjtbtg7a1fd6tqch45ho.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

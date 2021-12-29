@@ -124,22 +124,54 @@ class _DailyPlannerState extends State<DailyPlanner> {
             ),
             const SizedBox(height: 30),
             Expanded(
-              child: PageView(
-                controller: _controller,
-                physics: const BouncingScrollPhysics(),
-                onPageChanged: (newPage) => setState(() => _page = newPage),
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: DailyEvents(),
+              child: Stack(
+                children: [
+                  PageView(
+                    controller: _controller,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (newPage) => setState(() => _page = newPage),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyEvents(),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyTodo(),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyHabits(),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: DailyTodo(),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: DailyHabits(),
+                  // scroll day buttons
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.arrow_back),
+                            splashRadius: 24,
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.circle),
+                            iconSize: 16,
+                            splashRadius: 24,
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.arrow_forward),
+                            splashRadius: 24,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -1,3 +1,4 @@
+import 'package:bujo/services/auth.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/screen_base.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +108,10 @@ class _SettingsState extends State<Settings> {
               ),
               const SizedBox(height: 8),
               SettingsCard(
-                onPressed: () {},
+                onPressed: () async {
+                  await AuthService().signOut();
+                  Navigator.pop(context);
+                },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
@@ -127,7 +131,10 @@ class _SettingsState extends State<Settings> {
               const SizedBox(height: 8),
               SettingsCard(
                 delete: true,
-                onPressed: () {},
+                onPressed: () async {
+                  await AuthService().deleteAccountPermanently();
+                  Navigator.pop(context);
+                },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
