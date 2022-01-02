@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'package:bujo/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -12,6 +13,7 @@ class AuthService {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
+      await DatabaseService().createUser();
       return credential.user;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -53,6 +55,7 @@ class AuthService {
 
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
+      await DatabaseService().createUser();
       return userCredential.user;
     } catch (e) {
       return e.toString();
@@ -69,6 +72,7 @@ class AuthService {
 
   Future deleteAccountPermanently() async {
     try {
+      await DatabaseService().deleteUserFromDb();
       await _auth.currentUser!.delete();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {

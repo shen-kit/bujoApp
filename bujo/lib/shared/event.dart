@@ -38,7 +38,7 @@ String formatEventTime(EventTime time, {bool suffix = true}) {
   return '$hour${minute == '' ? '' : ':$minute'}${suffix ? am ? 'am' : 'pm' : ''}';
 }
 
-String eventTimeToString(EventInfo event) {
+String stringFromEventTime(EventInfo event) {
   // before 12 = 0, after 12 = 1
   bool bothAmOrPm =
       (event.startTime.hour / 12).floor() == (event.endTime.hour / 12).floor();
@@ -46,3 +46,6 @@ String eventTimeToString(EventInfo event) {
   String endTime = formatEventTime(event.endTime);
   return '$startTime-$endTime';
 }
+
+DateTime dateTimeFromEventTime(EventDate date, EventTime time) =>
+    DateTime(date.year, date.month, date.date, time.hour, time.minute);

@@ -16,18 +16,18 @@ class _SignInState extends State<SignIn> {
   final _passwordController = TextEditingController();
 
   final AuthService _auth = AuthService();
-  bool loading = false;
+  // bool loading = false;
   String error = '';
 
   void signIn() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => loading = true);
+    // setState(() => loading = true);
     dynamic result = await _auth.signInWithEmailAndPassword(
         _emailController.text, _passwordController.text);
     if (result.runtimeType == String) {
       setState(() {
         error = result;
-        loading = false;
+        // loading = false;
       });
     }
   }
@@ -79,12 +79,12 @@ class _SignInState extends State<SignIn> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  setState(() => loading = true);
+                  // setState(() => loading = true);
                   dynamic result = await _auth.signInWithGoogle();
                   if (result.runtimeType == String) {
                     setState(() {
                       error = result;
-                      loading = false;
+                      // loading = false;
                     });
                   }
                 },

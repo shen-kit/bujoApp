@@ -16,12 +16,12 @@ class _RegisterState extends State<Register> {
   final _passwordController = TextEditingController();
 
   final AuthService _auth = AuthService();
-  bool loading = false;
+  // bool loading = false;
   String error = '';
 
   void register() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => loading = true);
+    // setState(() => loading = true);
     dynamic result = await _auth.registerWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
@@ -29,7 +29,7 @@ class _RegisterState extends State<Register> {
     if (result.runtimeType == String) {
       setState(() {
         error = result;
-        loading = false;
+        // loading = false;
       });
     } else {}
   }
@@ -81,12 +81,12 @@ class _RegisterState extends State<Register> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  setState(() => loading = true);
+                  // setState(() => loading = true);
                   dynamic result = await _auth.signInWithGoogle();
                   if (result.runtimeType == String) {
                     setState(() {
                       error = result;
-                      loading = false;
+                      // loading = false;
                     });
                   }
                 },
