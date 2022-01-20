@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class EventsBottomEditBar extends StatefulWidget {
-  const EventsBottomEditBar({this.event, Key? key})
-      : super(key: key);
+  const EventsBottomEditBar({this.event, Key? key}) : super(key: key);
 
   final EventInfo? event;
 
@@ -175,20 +174,27 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
 
-                await DatabaseService().addEvent(
-                  EventInfo(
-                    name: eventNameController.text,
-                    date: EventDate(
-                      year: date.year,
-                      month: date.month,
-                      date: date.day,
-                    ),
-                    fullDay: fullDay,
-                    startTime: startTime,
-                    endTime: endTime,
-                    location: locationController.text,
+                EventInfo newEventInfo = EventInfo(
+                  name: eventNameController.text,
+                  date: EventDate(
+                    year: date.year,
+                    month: date.month,
+                    date: date.day,
                   ),
+                  fullDay: fullDay,
+                  startTime: startTime,
+                  endTime: endTime,
+                  location: locationController.text,
                 );
+
+                // new event
+                if (event == null) {
+                  await DatabaseService().addEvent(newEventInfo);
+                } else {
+                  await DatabaseService()
+                      .updateEvent(event!.docId!, newEventInfo);
+                }
+
                 Navigator.pop(context);
               },
               child: const Text('Save'),

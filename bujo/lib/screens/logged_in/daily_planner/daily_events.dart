@@ -5,6 +5,7 @@ import 'package:bujo/shared/events_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
 
 class DailyEvents extends StatefulWidget {
   const DailyEvents({Key? key}) : super(key: key);
@@ -19,32 +20,22 @@ class _DailyEventsState extends State<DailyEvents> {
     void showEditPanel({EventInfo? event}) async {
       showBottomEditBar(
         context,
-        EventsBottomEditBar(event: event, refreshPage: () => setState(() {})),
+        EventsBottomEditBar(event: event),
       );
     }
 
-    return FutureBuilder(
-      future: DatabaseService().getEvents(DateTime.now()),
-      builder: (BuildContext context, AsyncSnapshot<List<EventInfo>> snapshot) {
-        if (snapshot.hasError) {
-          return const Text('Something went wrong');
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Text("Loading");
-        }
-
-        if (snapshot.data == null) return const Text('no data');
-
+    return StreamProvider<List<EventInfo>>.value(
+      value: DatabaseService().dailyEvents,
+      initialData: const [],
+      builder: (context, child) {
         return Scaffold(
           backgroundColor: const Color(0xff000C35),
           body: ListView.separated(
-            itemCount: snapshot.data!.length,
+            itemCount: Provider.of<List<EventInfo>>(context).length,
             itemBuilder: (context, i) {
               return EventCard(
-                event: snapshot.data![i],
+                event: Provider.of<List<EventInfo>>(context)[i],
                 showEditPanel: showEditPanel,
-                refresh: () => setState(() {}),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
@@ -68,12 +59,10 @@ class EventCard extends StatelessWidget {
     Key? key,
     required this.event,
     required this.showEditPanel,
-    required this.refresh,
   }) : super(key: key);
 
   final EventInfo event;
   final Function showEditPanel;
-  final Function refresh;
 
   List<Widget> timeLocationWidgets() {
     if (event.fullDay && event.location.isEmpty) return [];
@@ -175,7 +164,6 @@ class EventCard extends StatelessWidget {
               backgroundColor: Colors.red,
               onPressed: (context) async {
                 await DatabaseService().deleteEvent(event.docId);
-                refresh();
               },
             ),
           ],

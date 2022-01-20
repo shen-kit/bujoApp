@@ -6,6 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseService {
+  DatabaseService({this.dateOffset = 0});
+
+  int dateOffset;
+
   final DocumentReference userDoc = FirebaseFirestore.instance
       .collection('users')
       .doc(FirebaseAuth.instance.currentUser!.uid);
@@ -70,41 +74,15 @@ class DatabaseService {
     });
   }
 
-  Future<List<EventInfo>> getEvents(DateTime date) async {
-    QuerySnapshot snapshot = await userDoc
-        .collection('events')
-        .where('start',
-            isGreaterThanOrEqualTo: dateFromDateTime(DateTime.now()),
-            isLessThan: dateFromDateTime(DateTime.now().add(
-              const Duration(days: 1),
-            )))
-        .get();
-
-    List<EventInfo> events = [];
-    for (var doc in snapshot.docs) {
-      DateTime start = doc['start'].toDate();
-      DateTime end = doc['end'].toDate();
-
-      events.add(EventInfo(
-        name: doc['name'],
-        date: EventDate(
-          year: start.year,
-          month: start.month,
-          date: start.day,
-        ),
-        fullDay: doc['full_day'],
-        startTime: EventTime(start.hour, start.minute),
-        endTime: EventTime(end.hour, end.minute),
-        location: doc['location'],
-        docId: doc.id,
-      ));
-    }
-    return events;
+  Future updateEvent(String docId, EventInfo event) async {
+    await userDoc.collection('events').doc(docId).update({
+      'name': event.name,
+      'start': dateTimeFromEventTime(event.date, event.startTime),
+      'end': dateTimeFromEventTime(event.date, event.endTime),
+      'location': event.location,
+      'full_day': event.fullDay,
+    });
   }
-
-  // Future<List<EventInfo>> getEvents(int numberOfEvents) {
-
-  // }
 
   List<EventInfo> _eventInfoFromSnapshot(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) {
@@ -127,8 +105,19 @@ class DatabaseService {
     }).toList();
   }
 
-  Stream<List<EventInfo>> get events {
-    return userDoc.collection('events').snapshots().map(_eventInfoFromSnapshot);
+  Stream<List<EventInfo>> get dailyEvents {
+    return userDoc
+        .collection('events')
+        .where('start',
+            isGreaterThanOrEqualTo: dateFromDateTime(DateTime.now().add(
+              Duration(days: dateOffset),
+            )),
+            isLessThan: dateFromDateTime(DateTime.now().add(
+              Duration(days: 1 + dateOffset),
+            )))
+        .orderBy('start')
+        .snapshots()
+        .map(_eventInfoFromSnapshot);
   }
 
   Future deleteEvent(String? docId) =>
