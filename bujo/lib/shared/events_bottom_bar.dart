@@ -5,32 +5,36 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class EventsBottomEditBar extends StatefulWidget {
-  const EventsBottomEditBar({this.event, Key? key}) : super(key: key);
+  const EventsBottomEditBar({this.event, Key? key})
+      : super(key: key);
 
   final EventInfo? event;
 
   @override
-  _EventsBottomEditBarState createState() => _EventsBottomEditBarState(event);
+  _EventsBottomEditBarState createState() => _EventsBottomEditBarState();
 }
 
 class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
-  _EventsBottomEditBarState(this.event);
+  _EventsBottomEditBarState();
 
   final _formKey = GlobalKey<FormState>();
 
-  final EventInfo? event;
+  EventInfo? event;
 
   final TextEditingController eventNameController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
 
   DateTime date = DateTime.now();
   String dateString = DateFormat('EEE, d MMM y').format(DateTime.now());
+
+  bool fullDay = false;
   EventTime startTime = EventTime(0, 0);
   EventTime endTime = EventTime(0, 0);
 
   @override
   void initState() {
     super.initState();
+    event = widget.event;
     eventNameController.text = event != null ? event!.name : '';
     locationController.text = event != null ? event!.location : '';
 
@@ -39,17 +43,30 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
       dateString = DateFormat('EEE, d MMM y').format(date);
       startTime = event!.startTime;
       endTime = event!.endTime;
+      fullDay = event!.fullDay;
     }
   }
 
-  Future<EventTime?> _getTime(TimeOfDay initialTime) async {
-    TimeOfDay? timeOfDay = await showTimePicker(
+  Future<List<EventTime>?> _getTime(
+      TimeOfDay initialStartTime, TimeOfDay initialEndTime) async {
+    TimeOfDay? startTime = await showTimePicker(
       context: context,
-      initialTime: initialTime,
+      initialTime: initialStartTime,
+      helpText: 'Choose Start Time',
     );
-    return timeOfDay == null
+    if (startTime == null) return null;
+    TimeOfDay? endTime = await showTimePicker(
+      context: context,
+      initialTime: initialEndTime,
+      helpText: 'Choose End Time',
+    );
+
+    return endTime == null
         ? null
-        : EventTime(timeOfDay.hour, timeOfDay.minute);
+        : [
+            EventTime(startTime.hour, startTime.minute),
+            EventTime(endTime.hour, endTime.minute),
+          ];
   }
 
   Future<DateTime?> _getDate(DateTime initialDate) async {
@@ -89,6 +106,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
             style: textInputStyle,
           ),
           const SizedBox(height: 10),
+          // date picker
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -106,37 +124,51 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
                 child: Text(dateString),
               ),
               Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(
-                    onPressed: () async {
-                      startTime = await _getTime(event != null
-                              ? TimeOfDay(
-                                  hour: event!.startTime.hour,
-                                  minute: event!.startTime.minute)
-                              : const TimeOfDay(hour: 0, minute: 0)) ??
-                          startTime;
-                      setState(() {});
+                  const Text('Full Day'),
+                  Checkbox(
+                    value: fullDay,
+                    checkColor: Colors.black,
+                    onChanged: (value) {
+                      setState(() => fullDay = !fullDay);
                     },
-                    child: Text(formatEventTime(startTime)),
-                  ),
-                  const Text('–'),
-                  TextButton(
-                    onPressed: () async {
-                      endTime = await _getTime(event != null
-                              ? TimeOfDay(
-                                  hour: event!.endTime.hour,
-                                  minute: event!.endTime.minute)
-                              : const TimeOfDay(hour: 0, minute: 0)) ??
-                          endTime;
-                      setState(() {});
-                    },
-                    child: Text(formatEventTime(endTime)),
                   ),
                 ],
               ),
             ],
           ),
+          // time picker
+          !fullDay
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () async {
+                      // get new times from picker, auto fill current details if any
+                      // continue with current times if 'cancel' pressed
+                      List<EventTime>? times = await _getTime(
+                              event != null
+                                  ? TimeOfDay(
+                                      hour: event!.startTime.hour,
+                                      minute: event!.startTime.minute)
+                                  : const TimeOfDay(hour: 0, minute: 0),
+                              event != null
+                                  ? TimeOfDay(
+                                      hour: event!.endTime.hour,
+                                      minute: event!.endTime.minute)
+                                  : const TimeOfDay(hour: 0, minute: 0)) ??
+                          [startTime, endTime];
+                      setState(() {
+                        startTime = times[0];
+                        endTime = times[1];
+                      });
+                    },
+                    child: Text(
+                        '${formatEventTime(startTime)} – ${formatEventTime(endTime)}'),
+                  ),
+                )
+              // maintain height
+              : const TextButton(onPressed: null, child: Text(' ')),
+          // save button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -151,6 +183,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
                       month: date.month,
                       date: date.day,
                     ),
+                    fullDay: fullDay,
                     startTime: startTime,
                     endTime: endTime,
                     location: locationController.text,

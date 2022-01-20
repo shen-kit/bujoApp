@@ -1,16 +1,21 @@
 class EventInfo {
   final String name;
   final EventDate date;
+  final bool fullDay;
   final EventTime startTime;
   final EventTime endTime;
   final String location;
 
+  final String? docId;
+
   EventInfo({
     required this.name,
     required this.date,
+    required this.fullDay,
     required this.startTime,
     required this.endTime,
     required this.location,
+    this.docId,
   });
 }
 

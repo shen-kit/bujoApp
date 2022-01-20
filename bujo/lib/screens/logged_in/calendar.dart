@@ -46,6 +46,7 @@ class _CalendarState extends State<Calendar> {
                   EventInfo(
                     name: 'Squash w/ Reuben',
                     date: EventDate(year: 2021, month: 12, date: 19),
+                    fullDay: false,
                     startTime: EventTime(14, 0),
                     endTime: EventTime(16, 0),
                     location: 'Leeming Striker',
@@ -53,6 +54,7 @@ class _CalendarState extends State<Calendar> {
                   EventInfo(
                     name: 'Carols in the Park',
                     date: EventDate(year: 2021, month: 12, date: 19),
+                    fullDay: false,
                     startTime: EventTime(19, 0),
                     endTime: EventTime(21, 30),
                     location: 'Gemmell Park',
@@ -67,6 +69,7 @@ class _CalendarState extends State<Calendar> {
                   EventInfo(
                     name: 'Spiderman w/ Khush/Sy/Jere',
                     date: EventDate(year: 2021, month: 12, date: 20),
+                    fullDay: false,
                     startTime: EventTime(11, 15),
                     endTime: EventTime(15, 30),
                     location: 'Carousel Hoyts',

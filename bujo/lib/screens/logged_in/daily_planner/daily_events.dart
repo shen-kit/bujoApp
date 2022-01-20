@@ -1,3 +1,4 @@
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/event.dart';
 import 'package:bujo/shared/events_bottom_bar.dart';
@@ -18,36 +19,46 @@ class _DailyEventsState extends State<DailyEvents> {
     void showEditPanel({EventInfo? event}) async {
       showBottomEditBar(
         context,
-        EventsBottomEditBar(event: event),
+        EventsBottomEditBar(event: event, refreshPage: () => setState(() {})),
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xff000C35),
-      body: ListView.separated(
-        itemCount: 1,
-        itemBuilder: (context, i) {
-          return EventCard(
-            event: EventInfo(
-              name: 'My Party',
-              date: EventDate(year: 2021, month: 12, date: 22),
-              startTime: EventTime(16, 0),
-              endTime: EventTime(20, 30),
-              location: 'Home',
+    return FutureBuilder(
+      future: DatabaseService().getEvents(DateTime.now()),
+      builder: (BuildContext context, AsyncSnapshot<List<EventInfo>> snapshot) {
+        if (snapshot.hasError) {
+          return const Text('Something went wrong');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Text("Loading");
+        }
+
+        if (snapshot.data == null) return const Text('no data');
+
+        return Scaffold(
+          backgroundColor: const Color(0xff000C35),
+          body: ListView.separated(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, i) {
+              return EventCard(
+                event: snapshot.data![i],
+                showEditPanel: showEditPanel,
+                refresh: () => setState(() {}),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const SizedBox(height: 10),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: showEditPanel,
+            child: const Icon(
+              Icons.add,
+              size: 36,
             ),
-            showEditPanel: showEditPanel,
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) =>
-            const SizedBox(height: 10),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: showEditPanel,
-        child: const Icon(
-          Icons.add,
-          size: 36,
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -57,10 +68,94 @@ class EventCard extends StatelessWidget {
     Key? key,
     required this.event,
     required this.showEditPanel,
+    required this.refresh,
   }) : super(key: key);
 
   final EventInfo event;
   final Function showEditPanel;
+  final Function refresh;
+
+  List<Widget> timeLocationWidgets() {
+    if (event.fullDay && event.location.isEmpty) return [];
+    if (event.fullDay) {
+      return [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                event.location,
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(width: 5),
+              const Icon(
+                Icons.location_on,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ];
+    }
+    if (event.location.isEmpty) {
+      return [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                stringFromEventTime(event),
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(width: 5),
+              const Icon(
+                FontAwesomeIcons.solidClock,
+                size: 16,
+              )
+            ],
+          ),
+        ),
+      ];
+    }
+    return [
+      Align(
+        alignment: Alignment.bottomRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              event.location,
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(width: 5),
+            const Icon(
+              Icons.location_on,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+      Align(
+        alignment: Alignment.topRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              stringFromEventTime(event),
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(width: 5),
+            const Icon(
+              FontAwesomeIcons.solidClock,
+              size: 16,
+            )
+          ],
+        ),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +173,10 @@ class EventCard extends StatelessWidget {
             SlidableAction(
               icon: Icons.delete,
               backgroundColor: Colors.red,
-              onPressed: (context) {},
+              onPressed: (context) async {
+                await DatabaseService().deleteEvent(event.docId);
+                refresh();
+              },
             ),
           ],
         ),
@@ -106,40 +204,7 @@ class EventCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        stringFromEventTime(event),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      const SizedBox(width: 5),
-                      const Icon(
-                        FontAwesomeIcons.solidClock,
-                        size: 16,
-                      )
-                    ],
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        event.location,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      const SizedBox(width: 5),
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                      )
-                    ],
-                  ),
-                ),
+                ...timeLocationWidgets(),
               ],
             ),
           ),

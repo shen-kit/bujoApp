@@ -14,6 +14,8 @@ class DatabaseService {
     return DateTime(dateTime.year, dateTime.month, dateTime.day);
   }
 
+  //#region User
+
   Future createUser() async {
     DateTime now = DateTime.now();
     try {
@@ -54,12 +56,84 @@ class DatabaseService {
     }
   }
 
+  //#endregion User
+
+  //#region Events
+
   Future addEvent(EventInfo event) async {
     await userDoc.collection('events').add({
       'name': event.name,
       'start': dateTimeFromEventTime(event.date, event.startTime),
       'end': dateTimeFromEventTime(event.date, event.endTime),
       'location': event.location,
+      'full_day': event.fullDay,
     });
   }
+
+  Future<List<EventInfo>> getEvents(DateTime date) async {
+    QuerySnapshot snapshot = await userDoc
+        .collection('events')
+        .where('start',
+            isGreaterThanOrEqualTo: dateFromDateTime(DateTime.now()),
+            isLessThan: dateFromDateTime(DateTime.now().add(
+              const Duration(days: 1),
+            )))
+        .get();
+
+    List<EventInfo> events = [];
+    for (var doc in snapshot.docs) {
+      DateTime start = doc['start'].toDate();
+      DateTime end = doc['end'].toDate();
+
+      events.add(EventInfo(
+        name: doc['name'],
+        date: EventDate(
+          year: start.year,
+          month: start.month,
+          date: start.day,
+        ),
+        fullDay: doc['full_day'],
+        startTime: EventTime(start.hour, start.minute),
+        endTime: EventTime(end.hour, end.minute),
+        location: doc['location'],
+        docId: doc.id,
+      ));
+    }
+    return events;
+  }
+
+  // Future<List<EventInfo>> getEvents(int numberOfEvents) {
+
+  // }
+
+  List<EventInfo> _eventInfoFromSnapshot(QuerySnapshot snapshot) {
+    return snapshot.docs.map((doc) {
+      DateTime start = doc['start'].toDate();
+      DateTime end = doc['end'].toDate();
+
+      return EventInfo(
+        name: doc['name'],
+        date: EventDate(
+          year: start.year,
+          month: start.month,
+          date: start.day,
+        ),
+        fullDay: doc['full_day'],
+        startTime: EventTime(start.hour, start.minute),
+        endTime: EventTime(end.hour, end.minute),
+        location: doc['location'],
+        docId: doc.id,
+      );
+    }).toList();
+  }
+
+  Stream<List<EventInfo>> get events {
+    return userDoc.collection('events').snapshots().map(_eventInfoFromSnapshot);
+  }
+
+  Future deleteEvent(String? docId) =>
+      userDoc.collection('events').doc(docId).delete();
+
+  //#endregion Events
+
 }
