@@ -100,30 +100,38 @@ class HabitCard extends StatelessWidget {
                       color: () {
                         switch (status) {
                           case HabitStates.done:
-                            return CheckboxColors.greenInside;
+                            return CheckboxColors.green
+                                .withOpacity(CheckboxColors.innerOpacity);
                           case HabitStates.notToday:
                             return Colors.transparent;
                           case HabitStates.failed:
-                            return CheckboxColors.redInside;
+                            return CheckboxColors.red
+                                .withOpacity(CheckboxColors.innerOpacity);
                           case HabitStates.excused:
-                            return CheckboxColors.yellowInside;
+                            return CheckboxColors.yellow
+                                .withOpacity(CheckboxColors.innerOpacity);
                           default:
-                            return CheckboxColors.whiteInside;
+                            return CheckboxColors.white
+                                .withOpacity(CheckboxColors.innerOpacity);
                         }
                       }(),
                       border: Border.all(
                         color: () {
                           switch (status) {
                             case HabitStates.done:
-                              return CheckboxColors.greenOutline;
+                              return CheckboxColors.green
+                                  .withOpacity(CheckboxColors.outlineOpacity);
                             case HabitStates.notToday:
                               return Colors.transparent;
                             case HabitStates.failed:
-                              return CheckboxColors.redOutline;
+                              return CheckboxColors.red
+                                  .withOpacity(CheckboxColors.outlineOpacity);
                             case HabitStates.excused:
-                              return CheckboxColors.yellowOutline;
+                              return CheckboxColors.yellow
+                                  .withOpacity(CheckboxColors.outlineOpacity);
                             default:
-                              return CheckboxColors.whiteOutline;
+                              return CheckboxColors.white
+                                  .withOpacity(CheckboxColors.outlineOpacity);
                           }
                         }(),
                       ),

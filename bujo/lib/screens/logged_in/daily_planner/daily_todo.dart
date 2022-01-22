@@ -1,5 +1,7 @@
+import 'package:bujo/screens/logged_in/daily_planner/todo_bottom_bar.dart';
 import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
+import 'package:bujo/shared/todo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -19,42 +21,8 @@ class _DailyTodoState extends State<DailyTodo> {
 
   @override
   Widget build(BuildContext context) {
-    void showEditPanel({String? name}) {
-      TextEditingController todoNameController =
-          TextEditingController(text: name ?? '');
-
-      showBottomEditBar(
-        context,
-        Form(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                name == null ? 'New To-Do' : 'Edit To-Do',
-                style: headerStyle,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: todoNameController,
-                validator: (val) =>
-                    val!.isEmpty ? 'To-Do can\'t be empty' : null,
-                decoration: textInputDecoration.copyWith(labelText: 'To-Do'),
-                style: textInputStyle,
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    void showEditPanel({required TodoInfo? todo}) {
+      showBottomEditBar(context, TodoBottomBar(todo: todo));
     }
 
     return Scaffold(
@@ -64,8 +32,12 @@ class _DailyTodoState extends State<DailyTodo> {
         itemBuilder: (context, i) {
           return i < todoCount
               ? TodoCard(
-                  todo: 'Do Stuff',
-                  done: _done,
+                  todo: TodoInfo(
+                    name: 'To Do',
+                    done: _done,
+                    category: 2,
+                    order: 1,
+                  ),
                   toggleDone: toggleDone,
                   showEditPanel: showEditPanel,
                 )
@@ -75,7 +47,7 @@ class _DailyTodoState extends State<DailyTodo> {
             const SizedBox(height: 10),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: showEditPanel,
+        onPressed: () => showEditPanel(todo: null),
         child: const Icon(
           Icons.add,
           size: 36,
@@ -89,13 +61,11 @@ class TodoCard extends StatelessWidget {
   const TodoCard({
     Key? key,
     required this.todo,
-    required this.done,
     required this.toggleDone,
     required this.showEditPanel,
   }) : super(key: key);
 
-  final String todo;
-  final bool done;
+  final TodoInfo todo;
   final Function toggleDone;
   final Function showEditPanel;
 
@@ -132,12 +102,19 @@ class TodoCard extends StatelessWidget {
         ),
         child: TextButton(
           onPressed: () => toggleDone(),
-          onLongPress: () => showEditPanel(name: todo),
+          onLongPress: () => showEditPanel(
+            todo: TodoInfo(
+              name: todo.name,
+              done: todo.done,
+              category: todo.category,
+              order: 1,
+            ),
+          ),
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             backgroundColor:
-                done ? const Color(0x30ffffff) : const Color(0x38ffffff),
-            primary: done ? const Color(0x30ffffff) : Colors.white,
+                todo.done ? const Color(0x30ffffff) : const Color(0x38ffffff),
+            primary: todo.done ? const Color(0x30ffffff) : Colors.white,
             shape: const RoundedRectangleBorder(), // set border radius = 0
           ),
           child: AbsorbPointer(
@@ -155,18 +132,22 @@ class TodoCard extends StatelessWidget {
                         width: 20,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: done
-                              ? CheckboxColors.blueInsideDim
-                              : CheckboxColors.blueInside,
+                          color: todo.done
+                              ? CheckboxColors.blue
+                                  .withOpacity(CheckboxColors.innerOpacityDim)
+                              : CheckboxColors.blue
+                                  .withOpacity(CheckboxColors.innerOpacity),
                           border: Border.all(
-                            color: done
-                                ? CheckboxColors.blueOutlineDim
-                                : CheckboxColors.blueOutline,
+                            color: todo.done
+                                ? CheckboxColors.blue.withOpacity(
+                                    CheckboxColors.outlineOpacityDim)
+                                : CheckboxColors.blue
+                                    .withOpacity(CheckboxColors.outlineOpacity),
                           ),
                         ),
                       ),
                       Visibility(
-                        visible: done,
+                        visible: todo.done,
                         child: const Align(
                           alignment: Alignment(1, -0.5),
                           child: Icon(
@@ -181,10 +162,10 @@ class TodoCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  todo,
+                  todo.name,
                   style: TextStyle(
                     fontSize: 16,
-                    decoration: done ? TextDecoration.lineThrough : null,
+                    decoration: todo.done ? TextDecoration.lineThrough : null,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 3,

@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:bujo/shared/event.dart';
+import 'package:bujo/shared/todo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -18,16 +19,25 @@ class DatabaseService {
     return DateTime(dateTime.year, dateTime.month, dateTime.day);
   }
 
+  String formatDate(DateTime date) {
+    return DateFormat('dd-MM-yyyy').format(date).toString();
+  }
+
+  Future createDateIfNotExist(DateTime date) async {
+    bool dayDocExists =
+        (await userDoc.collection('days').doc(formatDate(date)).get()).exists;
+    if (!dayDocExists) {
+      userDoc.collection('days').doc(formatDate(date)).set({'date': date});
+    }
+  }
+
   //#region User
 
   Future createUser() async {
     DateTime now = DateTime.now();
     try {
       if (!await userExists()) {
-        userDoc
-            .collection('days')
-            .doc(DateFormat('dd-MM-yyyy').format(now).toString())
-            .set({
+        userDoc.collection('days').doc(formatDate(now)).set({
           'date': dateFromDateTime(now),
           'todos': [],
           'habit_completion': [],
@@ -124,5 +134,23 @@ class DatabaseService {
       userDoc.collection('events').doc(docId).delete();
 
   //#endregion Events
+
+  //#region To Dos
+
+  Future addTodo(TodoInfo todo) async {
+    await createDateIfNotExist(DateTime.now());
+    await userDoc.collection('days').doc(formatDate(DateTime.now())).update({
+      'todos': FieldValue.arrayUnion([
+        {
+          'name': todo.name,
+          'done': todo.done,
+          'category': todo.category,
+          'order': todo.order,
+        }
+      ])
+    });
+  }
+
+  //#endregion To Dos
 
 }
