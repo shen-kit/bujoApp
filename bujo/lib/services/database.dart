@@ -139,16 +139,48 @@ class DatabaseService {
 
   Future addTodo(TodoInfo todo) async {
     await createDateIfNotExist(DateTime.now());
-    await userDoc.collection('days').doc(formatDate(DateTime.now())).update({
-      'todos': FieldValue.arrayUnion([
-        {
-          'name': todo.name,
-          'done': todo.done,
-          'category': todo.category,
-          'order': todo.order,
-        }
-      ])
-    });
+    await userDoc
+        .collection('days')
+        .doc(formatDate(DateTime.now()))
+        .collection('todos')
+        .add(
+      {
+        'name': todo.name,
+        'done': todo.done,
+        'category': todo.category,
+        'order': todo.order,
+      },
+    );
+  }
+
+  Future toggleTodoDone(TodoInfo todo) async {
+    userDoc
+        .collection('days')
+        .doc(formatDate(DateTime.now()))
+        .collection('todos')
+        .doc(todo.docId)
+        .update({'done': !todo.done});
+  }
+
+  List<TodoInfo> _todoInfoFromSnapshot(QuerySnapshot snapshot) {
+    return snapshot.docs
+        .map((doc) => TodoInfo(
+              docId: doc.id,
+              name: doc['name'],
+              done: doc['done'],
+              category: doc['category'],
+              order: doc['order'],
+            ))
+        .toList();
+  }
+
+  Stream<List<TodoInfo>> get dailyTodos {
+    return userDoc
+        .collection('days')
+        .doc(formatDate(DateTime.now()))
+        .collection('todos')
+        .snapshots()
+        .map(_todoInfoFromSnapshot);
   }
 
   //#endregion To Dos

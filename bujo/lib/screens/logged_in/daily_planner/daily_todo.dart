@@ -1,9 +1,11 @@
 import 'package:bujo/screens/logged_in/daily_planner/todo_bottom_bar.dart';
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/todo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
 
 class DailyTodo extends StatefulWidget {
   const DailyTodo({Key? key}) : super(key: key);
@@ -13,46 +15,41 @@ class DailyTodo extends StatefulWidget {
 }
 
 class _DailyTodoState extends State<DailyTodo> {
-  bool _done = false;
-
-  final int todoCount = 3;
-
-  void toggleDone() => setState(() => _done = !_done);
-
   @override
   Widget build(BuildContext context) {
     void showEditPanel({required TodoInfo? todo}) {
       showBottomEditBar(context, TodoBottomBar(todo: todo));
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xff000C35),
-      body: ListView.separated(
-        itemCount: todoCount + 1,
-        itemBuilder: (context, i) {
-          return i < todoCount
-              ? TodoCard(
-                  todo: TodoInfo(
-                    name: 'To Do',
-                    done: _done,
-                    category: 2,
-                    order: 1,
-                  ),
-                  toggleDone: toggleDone,
-                  showEditPanel: showEditPanel,
-                )
-              : const SizedBox(height: 45);
-        },
-        separatorBuilder: (BuildContext context, int index) =>
-            const SizedBox(height: 10),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showEditPanel(todo: null),
-        child: const Icon(
-          Icons.add,
-          size: 36,
-        ),
-      ),
+    return StreamProvider<List<TodoInfo>>.value(
+      initialData: const [],
+      value: DatabaseService().dailyTodos,
+      builder: (context, child) {
+        List<TodoInfo> todos = Provider.of<List<TodoInfo>>(context);
+        return Scaffold(
+          backgroundColor: const Color(0xff000C35),
+          body: ListView.separated(
+            itemCount: todos.length + 1,
+            itemBuilder: (context, i) {
+              return i < todos.length
+                  ? TodoCard(
+                      todo: todos[i],
+                      showEditPanel: showEditPanel,
+                    )
+                  : const SizedBox(height: 45);
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const SizedBox(height: 10),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => showEditPanel(todo: null),
+            child: const Icon(
+              Icons.add,
+              size: 36,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -61,12 +58,10 @@ class TodoCard extends StatelessWidget {
   const TodoCard({
     Key? key,
     required this.todo,
-    required this.toggleDone,
     required this.showEditPanel,
   }) : super(key: key);
 
   final TodoInfo todo;
-  final Function toggleDone;
   final Function showEditPanel;
 
   @override
@@ -101,7 +96,9 @@ class TodoCard extends StatelessWidget {
           ],
         ),
         child: TextButton(
-          onPressed: () => toggleDone(),
+          onPressed: () async {
+            DatabaseService().toggleTodoDone(todo);
+          },
           onLongPress: () => showEditPanel(
             todo: TodoInfo(
               name: todo.name,
@@ -133,15 +130,15 @@ class TodoCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: todo.done
-                              ? CheckboxColors.blue
+                              ? todoCategoryColors[todo.category]
                                   .withOpacity(CheckboxColors.innerOpacityDim)
-                              : CheckboxColors.blue
+                              : todoCategoryColors[todo.category]
                                   .withOpacity(CheckboxColors.innerOpacity),
                           border: Border.all(
                             color: todo.done
-                                ? CheckboxColors.blue.withOpacity(
+                                ? todoCategoryColors[todo.category].withOpacity(
                                     CheckboxColors.outlineOpacityDim)
-                                : CheckboxColors.blue
+                                : todoCategoryColors[todo.category]
                                     .withOpacity(CheckboxColors.outlineOpacity),
                           ),
                         ),
