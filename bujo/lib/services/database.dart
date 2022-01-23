@@ -19,15 +19,21 @@ class DatabaseService {
     return DateTime(dateTime.year, dateTime.month, dateTime.day);
   }
 
-  String formatDate(DateTime date) {
+  String formatDate(int _dateOffset) {
+    DateTime date = DateTime.now().add(Duration(days: _dateOffset));
     return DateFormat('dd-MM-yyyy').format(date).toString();
   }
 
-  Future createDateIfNotExist(DateTime date) async {
+  Future createDateIfNotExist(int _dateOffset) async {
+    DateTime date = DateTime.now().add(Duration(days: _dateOffset));
     bool dayDocExists =
-        (await userDoc.collection('days').doc(formatDate(date)).get()).exists;
+        (await userDoc.collection('days').doc(formatDate(_dateOffset)).get())
+            .exists;
     if (!dayDocExists) {
-      userDoc.collection('days').doc(formatDate(date)).set({'date': date});
+      userDoc
+          .collection('days')
+          .doc(formatDate(_dateOffset))
+          .set({'date': date});
     }
   }
 
@@ -37,7 +43,7 @@ class DatabaseService {
     DateTime now = DateTime.now();
     try {
       if (!await userExists()) {
-        userDoc.collection('days').doc(formatDate(now)).set({
+        userDoc.collection('days').doc(formatDate(dateOffset)).set({
           'date': dateFromDateTime(now),
           'todos': [],
           'habit_completion': [],
@@ -84,8 +90,8 @@ class DatabaseService {
     });
   }
 
-  Future updateEvent(String docId, EventInfo event) async {
-    await userDoc.collection('events').doc(docId).update({
+  Future updateEvent(EventInfo event) async {
+    await userDoc.collection('events').doc(event.docId).update({
       'name': event.name,
       'start': dateTimeFromEventTime(event.date, event.startTime),
       'end': dateTimeFromEventTime(event.date, event.endTime),
@@ -137,11 +143,17 @@ class DatabaseService {
 
   //#region To Dos
 
-  Future addTodo(TodoInfo todo) async {
-    await createDateIfNotExist(DateTime.now());
+  Future addTodo(TodoInfo todo,
+      {bool nextDay = false, previousDay = false}) async {
+    int _dateOffset = nextDay
+        ? dateOffset + 1
+        : previousDay
+            ? dateOffset - 1
+            : dateOffset;
+    await createDateIfNotExist(_dateOffset);
     await userDoc
         .collection('days')
-        .doc(formatDate(DateTime.now()))
+        .doc(formatDate(_dateOffset))
         .collection('todos')
         .add(
       {
@@ -153,10 +165,24 @@ class DatabaseService {
     );
   }
 
+  Future updateTodo(TodoInfo todo) async {
+    await userDoc
+        .collection('days')
+        .doc(formatDate(dateOffset))
+        .collection('todos')
+        .doc(todo.docId)
+        .update({
+      'name': todo.name,
+      'done': todo.done,
+      'category': todo.category,
+      'order': todo.order,
+    });
+  }
+
   Future toggleTodoDone(TodoInfo todo) async {
     userDoc
         .collection('days')
-        .doc(formatDate(DateTime.now()))
+        .doc(formatDate(dateOffset))
         .collection('todos')
         .doc(todo.docId)
         .update({'done': !todo.done});
@@ -177,11 +203,41 @@ class DatabaseService {
   Stream<List<TodoInfo>> get dailyTodos {
     return userDoc
         .collection('days')
-        .doc(formatDate(DateTime.now()))
+        .doc(formatDate(dateOffset))
         .collection('todos')
+        .orderBy('order')
         .snapshots()
         .map(_todoInfoFromSnapshot);
   }
+
+  Future migrateToDo(TodoInfo todo, bool forward) async {
+    userDoc
+        .collection('days')
+        .doc(formatDate(dateOffset))
+        .collection('todos')
+        .doc(todo.docId)
+        .delete();
+
+    addTodo(todo, nextDay: forward, previousDay: !forward);
+  }
+
+  Future reorderTodos(List<String> docIdsOrdered) async {
+    for (int i = 0; i < docIdsOrdered.length; i++) {
+      userDoc
+          .collection('days')
+          .doc(formatDate(dateOffset))
+          .collection('todos')
+          .doc(docIdsOrdered[i])
+          .update({'order': i});
+    }
+  }
+
+  Future deleteTodo(String? docId) => userDoc
+      .collection('days')
+      .doc(formatDate(dateOffset))
+      .collection('todos')
+      .doc(docId)
+      .delete();
 
   //#endregion To Dos
 

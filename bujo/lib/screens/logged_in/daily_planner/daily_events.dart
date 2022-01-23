@@ -162,9 +162,8 @@ class EventCard extends StatelessWidget {
             SlidableAction(
               icon: Icons.delete,
               backgroundColor: Colors.red,
-              onPressed: (context) async {
-                await DatabaseService().deleteEvent(event.docId);
-              },
+              onPressed: (context) =>
+                  DatabaseService().deleteEvent(event.docId),
             ),
           ],
         ),

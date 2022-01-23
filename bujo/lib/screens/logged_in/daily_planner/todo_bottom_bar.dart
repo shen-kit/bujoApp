@@ -4,12 +4,13 @@ import 'package:bujo/shared/todo.dart';
 import 'package:flutter/material.dart';
 
 class TodoBottomBar extends StatefulWidget {
-  const TodoBottomBar({this.todo, Key? key}) : super(key: key);
+  const TodoBottomBar({this.todo, this.todoCount, Key? key}) : super(key: key);
 
   @override
   _TodoBottomBarState createState() => _TodoBottomBarState();
 
   final TodoInfo? todo;
+  final int? todoCount;
 }
 
 class _TodoBottomBarState extends State<TodoBottomBar> {
@@ -19,6 +20,9 @@ class _TodoBottomBarState extends State<TodoBottomBar> {
   final TextEditingController todoNameController =
       TextEditingController(text: '');
   int _category = 0;
+
+  // prevent error from tapping 'save' twice
+  bool _exiting = false;
 
   @override
   void initState() {
@@ -94,20 +98,23 @@ class _TodoBottomBarState extends State<TodoBottomBar> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                if (!_formKey.currentState!.validate()) return;
+                if (!_formKey.currentState!.validate() || _exiting) return;
+
+                _exiting = true;
 
                 TodoInfo newTodoInfo = TodoInfo(
+                  docId: todo?.docId,
                   name: todoNameController.text,
                   done: todo == null ? false : todo!.done,
                   category: _category,
-                  order: 0,
+                  order: todo == null ? widget.todoCount! : todo!.order,
                 );
 
                 // new event
                 if (todo == null) {
                   await DatabaseService().addTodo(newTodoInfo);
                 } else {
-                  // update todo
+                  await DatabaseService().updateTodo(newTodoInfo);
                 }
 
                 Navigator.pop(context);

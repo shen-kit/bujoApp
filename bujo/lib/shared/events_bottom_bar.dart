@@ -175,6 +175,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
                 if (!_formKey.currentState!.validate()) return;
 
                 EventInfo newEventInfo = EventInfo(
+                  docId: event?.docId,
                   name: eventNameController.text,
                   date: EventDate(
                     year: date.year,
@@ -191,8 +192,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
                 if (event == null) {
                   await DatabaseService().addEvent(newEventInfo);
                 } else {
-                  await DatabaseService()
-                      .updateEvent(event!.docId!, newEventInfo);
+                  await DatabaseService().updateEvent(newEventInfo);
                 }
 
                 Navigator.pop(context);

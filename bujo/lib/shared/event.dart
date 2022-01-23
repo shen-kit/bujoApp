@@ -35,7 +35,7 @@ class EventTime {
 }
 
 String formatEventTime(EventTime time, {bool suffix = true}) {
-  bool am = time.hour <= 12;
+  bool am = time.hour < 12;
   String hour = am ? time.hour.toString() : (time.hour - 12).toString();
   if (hour == '0') hour = '12';
   String minute =
