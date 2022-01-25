@@ -8,7 +8,9 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 
 class DailyTodo extends StatefulWidget {
-  const DailyTodo({Key? key}) : super(key: key);
+  const DailyTodo(this.databaseService, {Key? key}) : super(key: key);
+
+  final DatabaseService databaseService;
 
   @override
   _DailyTodoState createState() => _DailyTodoState();
@@ -21,6 +23,7 @@ class _DailyTodoState extends State<DailyTodo> {
       showBottomEditBar(
         context,
         TodoBottomBar(
+          widget.databaseService,
           todo: todo,
           todoCount: todoCount,
         ),
@@ -29,7 +32,7 @@ class _DailyTodoState extends State<DailyTodo> {
 
     return StreamProvider<List<TodoInfo>>.value(
       initialData: const [],
-      value: DatabaseService().dailyTodos,
+      value: widget.databaseService.dailyTodos,
       builder: (context, child) {
         List<TodoInfo> todos = Provider.of<List<TodoInfo>>(context);
         return Scaffold(
@@ -53,6 +56,7 @@ class _DailyTodoState extends State<DailyTodo> {
             itemBuilder: (context, i) {
               return i < todos.length
                   ? TodoCard(
+                      widget.databaseService,
                       key: Key(todos[i].docId!),
                       todo: todos[i],
                       showEditPanel: showEditPanel,
@@ -60,14 +64,14 @@ class _DailyTodoState extends State<DailyTodo> {
                   : SizedBox(key: UniqueKey(), height: 45);
             },
             onReorder: (int oldIndex, int newIndex) {
-              if (oldIndex < newIndex) {
-                newIndex--;
-              }
-              // order starts at 1, index = order
+              if (oldIndex < newIndex) newIndex--;
+              // can't swap with the sized box at the end
+              if (newIndex == todos.length) newIndex--;
+
               TodoInfo temp = todos.removeAt(oldIndex);
               todos.insert(newIndex, temp);
               List<String> docIds = todos.map((todo) => todo.docId!).toList();
-              DatabaseService().reorderTodos(docIds);
+              widget.databaseService.reorderTodos(docIds);
             },
           ),
           floatingActionButton: FloatingActionButton(
@@ -84,7 +88,8 @@ class _DailyTodoState extends State<DailyTodo> {
 }
 
 class TodoCard extends StatelessWidget {
-  const TodoCard({
+  const TodoCard(
+    this.databaseService, {
     Key? key,
     required this.todo,
     required this.showEditPanel,
@@ -92,6 +97,7 @@ class TodoCard extends StatelessWidget {
 
   final TodoInfo todo;
   final Function showEditPanel;
+  final DatabaseService databaseService;
 
   @override
   Widget build(BuildContext context) {
@@ -111,14 +117,14 @@ class TodoCard extends StatelessWidget {
               icon: Icons.arrow_back_ios,
               backgroundColor: Colors.purple,
               onPressed: (context) {
-                DatabaseService().migrateToDo(todo, false);
+                databaseService.migrateToDo(todo, false);
               },
             ),
             SlidableAction(
               icon: Icons.arrow_forward_ios,
               backgroundColor: Colors.green,
               onPressed: (context) {
-                DatabaseService().migrateToDo(todo, true);
+                databaseService.migrateToDo(todo, true);
               },
             ),
           ],
@@ -130,13 +136,13 @@ class TodoCard extends StatelessWidget {
             SlidableAction(
               icon: Icons.delete,
               backgroundColor: Colors.red,
-              onPressed: (context) => DatabaseService().deleteTodo(todo.docId),
+              onPressed: (context) => databaseService.deleteTodo(todo.docId),
             ),
           ],
         ),
         child: TextButton(
           onPressed: () async {
-            DatabaseService().toggleTodoDone(todo);
+            databaseService.toggleTodoDone(todo);
           },
           onLongPress: () => showEditPanel(todo: todo),
           style: TextButton.styleFrom(

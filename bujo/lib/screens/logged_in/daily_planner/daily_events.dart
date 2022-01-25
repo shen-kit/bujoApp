@@ -8,7 +8,9 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 
 class DailyEvents extends StatefulWidget {
-  const DailyEvents({Key? key}) : super(key: key);
+  const DailyEvents(this.databaseService, {Key? key}) : super(key: key);
+
+  final DatabaseService databaseService;
 
   @override
   _DailyEventsState createState() => _DailyEventsState();
@@ -20,12 +22,12 @@ class _DailyEventsState extends State<DailyEvents> {
     void showEditPanel({EventInfo? event}) async {
       showBottomEditBar(
         context,
-        EventsBottomEditBar(event: event),
+        EventsBottomEditBar(widget.databaseService, event: event),
       );
     }
 
     return StreamProvider<List<EventInfo>>.value(
-      value: DatabaseService().dailyEvents,
+      value: widget.databaseService.dailyEvents,
       initialData: const [],
       builder: (context, child) {
         return Scaffold(
@@ -34,6 +36,7 @@ class _DailyEventsState extends State<DailyEvents> {
             itemCount: Provider.of<List<EventInfo>>(context).length,
             itemBuilder: (context, i) {
               return EventCard(
+                widget.databaseService,
                 event: Provider.of<List<EventInfo>>(context)[i],
                 showEditPanel: showEditPanel,
               );
@@ -55,7 +58,8 @@ class _DailyEventsState extends State<DailyEvents> {
 }
 
 class EventCard extends StatelessWidget {
-  const EventCard({
+  const EventCard(
+    this.databaseService, {
     Key? key,
     required this.event,
     required this.showEditPanel,
@@ -63,6 +67,7 @@ class EventCard extends StatelessWidget {
 
   final EventInfo event;
   final Function showEditPanel;
+  final DatabaseService databaseService;
 
   List<Widget> timeLocationWidgets() {
     if (event.fullDay && event.location.isEmpty) return [];
@@ -162,8 +167,7 @@ class EventCard extends StatelessWidget {
             SlidableAction(
               icon: Icons.delete,
               backgroundColor: Colors.red,
-              onPressed: (context) =>
-                  DatabaseService().deleteEvent(event.docId),
+              onPressed: (context) => databaseService.deleteEvent(event.docId),
             ),
           ],
         ),

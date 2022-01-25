@@ -1,11 +1,13 @@
 import 'package:bujo/screens/logged_in/daily_planner/daily_events.dart';
 import 'package:bujo/screens/logged_in/daily_planner/daily_habits.dart';
 import 'package:bujo/screens/logged_in/daily_planner/daily_todo.dart';
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bujo/shared/get_text_size.dart';
 import 'package:bujo/shared/screen_base.dart';
+import 'package:intl/intl.dart';
 
 class DailyPlanner extends StatefulWidget {
   const DailyPlanner({Key? key}) : super(key: key);
@@ -18,13 +20,31 @@ class _DailyPlannerState extends State<DailyPlanner> {
   final PageController _controller = PageController(initialPage: 1);
 
   int _page = 1;
+  int dateOffset = 0;
+  DatabaseService databaseService = DatabaseService();
+
+  void changeDate({required int amount}) {
+    setState(() {
+      dateOffset += amount;
+      databaseService = DatabaseService(dateOffset: dateOffset);
+    });
+  }
+
+  String formatDate() {
+    DateTime date = DateTime.now().add(Duration(days: dateOffset));
+    String formatted = DateFormat('EEEE, MMMM d').format(date);
+    if (dateOffset == -1) formatted += ' (Yesterday)';
+    if (dateOffset == 0) formatted += ' (Today)';
+    if (dateOffset == 1) formatted += ' (Tomorrow)';
+    return formatted;
+  }
 
   @override
   Widget build(BuildContext context) {
     return screenBase(
       context: context,
       title: 'My Day',
-      subtitle: 'Make the most of it',
+      subtitle: formatDate(), //'Make the most of it',
       settings: true,
       mainContent: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -130,18 +150,18 @@ class _DailyPlannerState extends State<DailyPlanner> {
                     controller: _controller,
                     physics: const BouncingScrollPhysics(),
                     onPageChanged: (newPage) => setState(() => _page = newPage),
-                    children: const [
+                    children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: DailyEvents(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyEvents(databaseService),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: DailyTodo(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyTodo(databaseService),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: DailyHabits(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: DailyHabits(databaseService),
                       ),
                     ],
                   ),
@@ -154,18 +174,18 @@ class _DailyPlannerState extends State<DailyPlanner> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () => changeDate(amount: -1),
                             icon: const Icon(Icons.arrow_back),
                             splashRadius: 24,
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () => changeDate(amount: -dateOffset),
                             icon: const Icon(Icons.circle),
                             iconSize: 16,
                             splashRadius: 24,
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () => changeDate(amount: 1),
                             icon: const Icon(Icons.arrow_forward),
                             splashRadius: 24,
                           ),

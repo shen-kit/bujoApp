@@ -4,13 +4,16 @@ import 'package:bujo/shared/todo.dart';
 import 'package:flutter/material.dart';
 
 class TodoBottomBar extends StatefulWidget {
-  const TodoBottomBar({this.todo, this.todoCount, Key? key}) : super(key: key);
+  const TodoBottomBar(this.databaseService,
+      {this.todo, this.todoCount, Key? key})
+      : super(key: key);
 
   @override
   _TodoBottomBarState createState() => _TodoBottomBarState();
 
   final TodoInfo? todo;
   final int? todoCount;
+  final DatabaseService databaseService;
 }
 
 class _TodoBottomBarState extends State<TodoBottomBar> {
@@ -112,9 +115,9 @@ class _TodoBottomBarState extends State<TodoBottomBar> {
 
                 // new event
                 if (todo == null) {
-                  await DatabaseService().addTodo(newTodoInfo);
+                  await widget.databaseService.addTodo(newTodoInfo);
                 } else {
-                  await DatabaseService().updateTodo(newTodoInfo);
+                  await widget.databaseService.updateTodo(newTodoInfo);
                 }
 
                 Navigator.pop(context);

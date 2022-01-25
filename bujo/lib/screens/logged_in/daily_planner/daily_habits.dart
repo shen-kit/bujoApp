@@ -1,8 +1,11 @@
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:flutter/material.dart';
 
 class DailyHabits extends StatefulWidget {
-  const DailyHabits({Key? key}) : super(key: key);
+  const DailyHabits(this.databaseService, {Key? key}) : super(key: key);
+
+  final DatabaseService databaseService;
 
   @override
   _DailyHabitsState createState() => _DailyHabitsState();

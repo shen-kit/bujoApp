@@ -1,3 +1,4 @@
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/event.dart';
@@ -24,7 +25,7 @@ class _CalendarState extends State<Calendar> {
     void showEditPanel({EventInfo? event}) async {
       showBottomEditBar(
         context,
-        EventsBottomEditBar(event: event),
+        EventsBottomEditBar(DatabaseService(), event: event),
       );
     }
 

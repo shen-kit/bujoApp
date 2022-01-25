@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class EventsBottomEditBar extends StatefulWidget {
-  const EventsBottomEditBar({this.event, Key? key}) : super(key: key);
+  const EventsBottomEditBar(this.databaseService, {this.event, Key? key})
+      : super(key: key);
 
   final EventInfo? event;
+  final DatabaseService databaseService;
 
   @override
   _EventsBottomEditBarState createState() => _EventsBottomEditBarState();
@@ -24,7 +26,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
   final TextEditingController locationController = TextEditingController();
 
   DateTime date = DateTime.now();
-  String dateString = DateFormat('EEE, d MMM y').format(DateTime.now());
+  String dateString = '';
 
   bool fullDay = false;
   EventTime startTime = EventTime(0, 0);
@@ -37,9 +39,12 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
     eventNameController.text = event != null ? event!.name : '';
     locationController.text = event != null ? event!.location : '';
 
+    date = date.add(Duration(days: widget.databaseService.dateOffset));
+    dateString = _stringFromDate(date);
+
     if (event != null) {
       date = DateTime(event!.date.year, event!.date.month, event!.date.date);
-      dateString = DateFormat('EEE, d MMM y').format(date);
+      dateString = _stringFromDate(date);
       startTime = event!.startTime;
       endTime = event!.endTime;
       fullDay = event!.fullDay;
@@ -77,8 +82,8 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
     );
   }
 
-  String _stringFromDate(DateTime date) =>
-      DateFormat('EEE, d MMM y').format(date);
+  String _stringFromDate(DateTime _date) =>
+      DateFormat('EEE, d MMM y').format(_date);
 
   @override
   Widget build(BuildContext context) {
@@ -111,11 +116,7 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
             children: [
               TextButton(
                 onPressed: () async {
-                  date = await _getDate(event != null
-                          ? DateTime(event!.date.year, event!.date.month,
-                              event!.date.date)
-                          : DateTime.now()) ??
-                      date;
+                  date = await _getDate(date) ?? date;
                   setState(() {
                     dateString = _stringFromDate(date);
                   });
@@ -145,16 +146,14 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
                       // get new times from picker, auto fill current details if any
                       // continue with current times if 'cancel' pressed
                       List<EventTime>? times = await _getTime(
-                              event != null
-                                  ? TimeOfDay(
-                                      hour: event!.startTime.hour,
-                                      minute: event!.startTime.minute)
-                                  : const TimeOfDay(hour: 0, minute: 0),
-                              event != null
-                                  ? TimeOfDay(
-                                      hour: event!.endTime.hour,
-                                      minute: event!.endTime.minute)
-                                  : const TimeOfDay(hour: 0, minute: 0)) ??
+                              TimeOfDay(
+                                hour: startTime.hour,
+                                minute: startTime.minute,
+                              ),
+                              TimeOfDay(
+                                hour: endTime.hour,
+                                minute: endTime.minute,
+                              )) ??
                           [startTime, endTime];
                       setState(() {
                         startTime = times[0];
@@ -190,9 +189,9 @@ class _EventsBottomEditBarState extends State<EventsBottomEditBar> {
 
                 // new event
                 if (event == null) {
-                  await DatabaseService().addEvent(newEventInfo);
+                  await widget.databaseService.addEvent(newEventInfo);
                 } else {
-                  await DatabaseService().updateEvent(newEventInfo);
+                  await widget.databaseService.updateEvent(newEventInfo);
                 }
 
                 Navigator.pop(context);

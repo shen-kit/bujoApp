@@ -218,7 +218,23 @@ class DatabaseService {
         .doc(todo.docId)
         .delete();
 
-    addTodo(todo, nextDay: forward, previousDay: !forward);
+    QuerySnapshot snapshot = await userDoc
+        .collection('days')
+        .doc(formatDate(forward ? dateOffset + 1 : dateOffset - 1))
+        .collection('todos')
+        .get();
+
+    int todosInMigratingDay = snapshot.docs.length;
+
+    TodoInfo newTodo = TodoInfo(
+      docId: todo.docId,
+      name: todo.name,
+      done: todo.done,
+      category: todo.category,
+      order: todosInMigratingDay,
+    );
+
+    addTodo(newTodo, nextDay: forward, previousDay: !forward);
   }
 
   Future reorderTodos(List<String> docIdsOrdered) async {
