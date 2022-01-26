@@ -30,14 +30,16 @@ class _DailyEventsState extends State<DailyEvents> {
       value: widget.databaseService.dailyEvents,
       initialData: const [],
       builder: (context, child) {
+        List<EventInfo> events = Provider.of<List<EventInfo>>(context);
+
         return Scaffold(
           backgroundColor: const Color(0xff000C35),
           body: ListView.separated(
-            itemCount: Provider.of<List<EventInfo>>(context).length,
+            itemCount: events.length,
             itemBuilder: (context, i) {
               return EventCard(
                 widget.databaseService,
-                event: Provider.of<List<EventInfo>>(context)[i],
+                event: events[i],
                 showEditPanel: showEditPanel,
               );
             },

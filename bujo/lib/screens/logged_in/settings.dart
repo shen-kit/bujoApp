@@ -48,33 +48,33 @@ class _SettingsState extends State<Settings> {
                 ),
               ),
               const SizedBox(height: 8),
-              SettingsCard(
-                onPressed: () {},
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        'My Day Quote',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Make the most of it',
-                        style: TextStyle(
-                          fontFamily: 'Garamond',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              // SettingsCard(
+              //   onPressed: () {},
+              //   child: Align(
+              //     alignment: Alignment.centerLeft,
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       mainAxisAlignment: MainAxisAlignment.center,
+              //       children: const [
+              //         Text(
+              //           'My Day Quote',
+              //           style: TextStyle(
+              //             fontSize: 16,
+              //             fontWeight: FontWeight.w400,
+              //           ),
+              //         ),
+              //         SizedBox(height: 5),
+              //         Text(
+              //           'Make the most of it',
+              //           style: TextStyle(
+              //             fontFamily: 'Garamond',
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 8),
               SettingsCard(
                 onPressed: () {},
                 child: Align(

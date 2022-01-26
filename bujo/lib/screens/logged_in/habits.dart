@@ -1,3 +1,4 @@
+import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/bottom_bar.dart';
 import 'package:bujo/shared/constants.dart';
 import 'package:bujo/shared/habit.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:bujo/shared/screen_base.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 class Habits extends StatefulWidget {
   const Habits({Key? key}) : super(key: key);
@@ -15,6 +17,10 @@ class Habits extends StatefulWidget {
 }
 
 class _HabitsState extends State<Habits> {
+  final _formKey = GlobalKey<FormState>();
+
+  final DatabaseService _databaseService = DatabaseService();
+
   @override
   Widget build(BuildContext context) {
     void showEditPanel(HabitInfo? habit) {
@@ -22,10 +28,14 @@ class _HabitsState extends State<Habits> {
           TextEditingController(text: habit != null ? habit.name : '');
       TextEditingController habitDescriptionController =
           TextEditingController(text: habit != null ? habit.description : '');
+      TextEditingController partialRequirementController =
+          TextEditingController(
+              text: habit != null ? habit.partialRequirement : '');
 
       showBottomEditBar(
         context,
         Form(
+          key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -51,10 +61,42 @@ class _HabitsState extends State<Habits> {
                 style: textInputStyle,
               ),
               const SizedBox(height: 10),
+              TextFormField(
+                controller: partialRequirementController,
+                decoration: textInputDecoration.copyWith(
+                    labelText: 'Partial Complete Requirement'),
+                style: textInputStyle,
+              ),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    if (!_formKey.currentState!.validate()) return;
+
+                    DateTime now = DateTime.now();
+
+                    HabitInfo newHabitInfo = HabitInfo(
+                      name: habitNameController.text,
+                      description: habitDescriptionController.text,
+                      partialRequirement: partialRequirementController.text,
+                      completed: habit == null ? 0 : habit.completed,
+                      partiallyCompleted:
+                          habit == null ? 0 : habit.partiallyCompleted,
+                      failed: habit == null ? 0 : habit.failed,
+                      excused: habit == null ? 0 : habit.excused,
+                      startDate: DateTime(now.year, now.month, now.day),
+                      endDate: null,
+                      order: 0, // currentHabits.length
+                    );
+
+                    // new habit
+                    if (habit == null) {
+                      await _databaseService.addHabit(newHabitInfo);
+                    } else {
+                      // await _databaseService.updateHabit(newHabitInfo);
+                    }
+
                     Navigator.pop(context);
                   },
                   child: const Text('Save'),
@@ -66,101 +108,58 @@ class _HabitsState extends State<Habits> {
       );
     }
 
-    return Scaffold(
-      body: screenBase(
-        context: context,
-        title: 'Habits',
-        subtitle: 'Every action is a vote for who you will become',
-        settings: true,
-        mainContent: Padding(
-          padding: const EdgeInsets.all(20),
-          child: ListView(
-            children: [
-              Text(
-                'Current',
-                style: headerStyle,
+    return StreamProvider<List<List<HabitInfo>>>.value(
+      initialData: const [[], []],
+      value: _databaseService.habits,
+      builder: (context, child) {
+        List<HabitInfo> currentHabits =
+            Provider.of<List<List<HabitInfo>>>(context)[0];
+        List<HabitInfo> finishedHabits =
+            Provider.of<List<List<HabitInfo>>>(context)[1];
+        return Scaffold(
+          body: screenBase(
+            context: context,
+            title: 'Habits',
+            subtitle: 'Every action is a vote for who you will become',
+            settings: true,
+            mainContent: Padding(
+              padding: const EdgeInsets.all(20),
+              child: ListView.builder(
+                itemCount: currentHabits.length + finishedHabits.length + 2,
+                itemBuilder: (context, i) {
+                  if (i == 0) {
+                    return Text(
+                      'Current',
+                      style: headerStyle,
+                    );
+                  }
+                  if (i == currentHabits.length + 1) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(
+                        'Finished',
+                        style: headerStyle,
+                      ),
+                    );
+                  }
+                  return HabitCard(
+                      habit: i < currentHabits.length + 1
+                          ? currentHabits[i - 1]
+                          : finishedHabits[i - currentHabits.length - 2],
+                      showEditPanel: showEditPanel);
+                },
               ),
-              HabitCard(
-                habit: HabitInfo(
-                  name: 'Chinese',
-                  description: 'Practice Chinese for 5 minutes',
-                  streak: 13,
-                  completed: 58,
-                  failed: 12,
-                  excused: 3,
-                  startDate: HabitDate(2021, 11, 1),
-                  endDate: null,
-                ),
-                showEditPanel: showEditPanel,
-              ),
-              HabitCard(
-                habit: HabitInfo(
-                  name: 'Cold Shower',
-                  description: 'Practice Chinese for 5 minutes',
-                  streak: 13,
-                  completed: 58,
-                  failed: 12,
-                  excused: 3,
-                  startDate: HabitDate(2021, 11, 1),
-                  endDate: null,
-                ),
-                showEditPanel: showEditPanel,
-              ),
-              HabitCard(
-                habit: HabitInfo(
-                  name: 'Morning Exercise',
-                  description: 'Practice Chinese for 5 minutes',
-                  streak: 13,
-                  completed: 58,
-                  failed: 12,
-                  excused: 3,
-                  startDate: HabitDate(2021, 11, 1),
-                  endDate: null,
-                ),
-                showEditPanel: showEditPanel,
-              ),
-              HabitCard(
-                habit: HabitInfo(
-                  name: 'Afternoon Exercise',
-                  description: 'Practice Chinese for 5 minutes',
-                  streak: 13,
-                  completed: 58,
-                  failed: 12,
-                  excused: 3,
-                  startDate: HabitDate(2021, 11, 1),
-                  endDate: null,
-                ),
-                showEditPanel: showEditPanel,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Finished',
-                style: headerStyle,
-              ),
-              HabitCard(
-                habit: HabitInfo(
-                  name: 'No Artificial Sugar',
-                  description: 'Practice Chinese for 5 minutes',
-                  streak: 13,
-                  completed: 58,
-                  failed: 12,
-                  excused: 3,
-                  startDate: HabitDate(2021, 11, 1),
-                  endDate: HabitDate(2021, 12, 31),
-                ),
-                showEditPanel: showEditPanel,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showEditPanel(null),
-        child: const Icon(
-          Icons.add,
-          size: 36,
-        ),
-      ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => showEditPanel(null),
+            child: const Icon(
+              Icons.add,
+              size: 36,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -177,6 +176,14 @@ class HabitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String successPercentage =
+        (habit.completed / (habit.completed + habit.failed) * 100).toString();
+    if (successPercentage.length > 4) {
+      successPercentage = successPercentage.substring(0, 4);
+    }
+    if (successPercentage == 'NaN') {
+      successPercentage = 'N/A';
+    }
     return Container(
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
@@ -243,7 +250,7 @@ class HabitCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          habit.streak.toString(),
+                          habit.streak?.toString() ?? 'N/A',
                           textAlign: TextAlign.right,
                           style: const TextStyle(fontSize: 11),
                         ),
@@ -259,11 +266,7 @@ class HabitCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          (habit.completed /
-                                  (habit.completed + habit.failed) *
-                                  100)
-                              .toString()
-                              .substring(0, 4),
+                          successPercentage,
                           textAlign: TextAlign.right,
                           style: const TextStyle(fontSize: 11),
                           overflow: TextOverflow.ellipsis,

@@ -1,29 +1,29 @@
 class HabitInfo {
+  final String? docId;
   final String name;
   final String description;
-  final int streak;
+  final String partialRequirement;
+  final int? streak;
   final int completed;
+  final int partiallyCompleted;
   final int failed;
   final int excused;
-  final HabitDate startDate;
-  final HabitDate? endDate;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final int order;
 
   HabitInfo({
+    this.docId,
     required this.name,
     required this.description,
-    required this.streak,
+    required this.partialRequirement,
+    this.streak,
     required this.completed,
+    required this.partiallyCompleted,
     required this.failed,
     required this.excused,
     required this.startDate,
     required this.endDate,
+    required this.order,
   });
-}
-
-class HabitDate {
-  final int year;
-  final int month;
-  final int date;
-
-  HabitDate(this.year, this.month, this.date);
 }

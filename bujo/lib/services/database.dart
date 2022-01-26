@@ -1,15 +1,17 @@
 // ignore_for_file: avoid_print
 
 import 'package:bujo/shared/event.dart';
+import 'package:bujo/shared/habit.dart';
 import 'package:bujo/shared/todo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseService {
-  DatabaseService({this.dateOffset = 0});
+  DatabaseService({this.dateOffset = 0, this.calendarEventsToLoad = 15});
 
   int dateOffset;
+  int calendarEventsToLoad = 15;
 
   final DocumentReference userDoc = FirebaseFirestore.instance
       .collection('users')
@@ -136,6 +138,59 @@ class DatabaseService {
         .map(_eventInfoFromSnapshot);
   }
 
+  Map<DateTime, List<EventInfo>> _calendarEventsFromSnapshot(
+      QuerySnapshot snapshot) {
+    Map<DateTime, List<EventInfo>> events = {};
+
+    for (var doc in snapshot.docs) {
+      DateTime start = doc['start'].toDate();
+      DateTime end = doc['end'].toDate();
+
+      DateTime date = DateTime(start.year, start.month, start.day);
+
+      if (events[date] == null) {
+        events[date] = [];
+      }
+
+      events[date]!.add(
+        EventInfo(
+          name: doc['name'],
+          date: EventDate(
+            year: start.year,
+            month: start.month,
+            date: start.day,
+          ),
+          fullDay: doc['full_day'],
+          startTime: EventTime(start.hour, start.minute),
+          endTime: EventTime(end.hour, end.minute),
+          location: doc['location'],
+          docId: doc.id,
+        ),
+      );
+    }
+
+    return events;
+  }
+
+  Stream<Map<DateTime, List<EventInfo>>> get calendarEvents {
+    return userDoc
+        .collection('events')
+        .where(
+          'start',
+          isGreaterThanOrEqualTo: dateFromDateTime(
+            DateTime.now().add(Duration(days: dateOffset)),
+          ),
+        )
+        .orderBy('start')
+        .limit(calendarEventsToLoad)
+        .snapshots()
+        .map(_calendarEventsFromSnapshot);
+  }
+
+  void loadMoreCalendarEvents() {
+    calendarEventsToLoad += 10;
+  }
+
   Future deleteEvent(String? docId) =>
       userDoc.collection('events').doc(docId).delete();
 
@@ -248,13 +303,70 @@ class DatabaseService {
     }
   }
 
-  Future deleteTodo(String? docId) => userDoc
-      .collection('days')
-      .doc(formatDate(dateOffset))
-      .collection('todos')
-      .doc(docId)
-      .delete();
+  Future deleteTodo(String? docId) {
+    return userDoc
+        .collection('days')
+        .doc(formatDate(dateOffset))
+        .collection('todos')
+        .doc(docId)
+        .delete();
+  }
 
   //#endregion To Dos
+
+  //#region Habits
+
+  Future addHabit(HabitInfo habit) async {
+    await userDoc.collection('habits').add({
+      'name': habit.name,
+      'description': habit.description,
+      'partial_requirement': habit.partialRequirement,
+      'completed': 0,
+      'partially_completed': 0,
+      'failed': 0,
+      'excused': 0,
+      'start_date': habit.startDate,
+      'end_date': null,
+      'order': habit.order,
+    });
+  }
+
+  List<List<HabitInfo>> _habitsFromSnapshot(QuerySnapshot snapshot) {
+    List<HabitInfo> current = [];
+    List<HabitInfo> finished = [];
+    for (var doc in snapshot.docs) {
+      HabitInfo habit = HabitInfo(
+        name: doc['name'],
+        description: doc['description'],
+        partialRequirement: doc['partial_requirement'],
+        completed: doc['completed'],
+        partiallyCompleted: doc['partially_completed'],
+        failed: doc['failed'],
+        excused: doc['excused'],
+        startDate: doc['start_date'].toDate(),
+        endDate: doc['end_date']?.toDate(),
+        order: doc['order'],
+      );
+
+      if (doc['end_date'] == null) {
+        current.add(habit);
+      } else {
+        finished.add(habit);
+      }
+    }
+
+    return [current, finished];
+  }
+
+  // index 0 = current, index 1 = completed
+  Stream<List<List<HabitInfo>>> get habits {
+    return userDoc
+        .collection('habits')
+        .orderBy('order')
+        .snapshots()
+        .map(_habitsFromSnapshot);
+  }
+
+  //#endregion Habits
 
 }

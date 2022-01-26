@@ -17,6 +17,9 @@ class _DailyHabitsState extends State<DailyHabits> {
   void cycleHabitStatus() => setState(() {
         switch (status) {
           case HabitStates.future:
+            status = HabitStates.partial;
+            break;
+          case HabitStates.partial:
             status = HabitStates.done;
             break;
           case HabitStates.done:
@@ -102,11 +105,14 @@ class HabitCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: () {
                         switch (status) {
+                          case HabitStates.notToday:
+                            return Colors.transparent;
                           case HabitStates.done:
                             return CheckboxColors.green
                                 .withOpacity(CheckboxColors.innerOpacity);
-                          case HabitStates.notToday:
-                            return Colors.transparent;
+                          case HabitStates.partial:
+                            return CheckboxColors.blue
+                                .withOpacity(CheckboxColors.innerOpacity);
                           case HabitStates.failed:
                             return CheckboxColors.red
                                 .withOpacity(CheckboxColors.innerOpacity);
@@ -121,11 +127,14 @@ class HabitCard extends StatelessWidget {
                       border: Border.all(
                         color: () {
                           switch (status) {
+                            case HabitStates.notToday:
+                              return Colors.transparent;
                             case HabitStates.done:
                               return CheckboxColors.green
                                   .withOpacity(CheckboxColors.outlineOpacity);
-                            case HabitStates.notToday:
-                              return Colors.transparent;
+                            case HabitStates.partial:
+                              return CheckboxColors.blue
+                                  .withOpacity(CheckboxColors.outlineOpacity);
                             case HabitStates.failed:
                               return CheckboxColors.red
                                   .withOpacity(CheckboxColors.outlineOpacity);

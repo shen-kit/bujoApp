@@ -32,10 +32,7 @@ class _DailyPlannerState extends State<DailyPlanner> {
 
   String formatDate() {
     DateTime date = DateTime.now().add(Duration(days: dateOffset));
-    String formatted = DateFormat('EEEE, MMMM d').format(date);
-    if (dateOffset == -1) formatted += ' (Yesterday)';
-    if (dateOffset == 0) formatted += ' (Today)';
-    if (dateOffset == 1) formatted += ' (Tomorrow)';
+    String formatted = DateFormat('EEEE, d MMMM y').format(date);
     return formatted;
   }
 
