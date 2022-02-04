@@ -1,6 +1,8 @@
 import 'package:bujo/services/database.dart';
 import 'package:bujo/shared/constants.dart';
+import 'package:bujo/shared/habit.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class DailyHabits extends StatefulWidget {
   const DailyHabits(this.databaseService, {Key? key}) : super(key: key);
@@ -12,48 +14,81 @@ class DailyHabits extends StatefulWidget {
 }
 
 class _DailyHabitsState extends State<DailyHabits> {
-  HabitStates status = HabitStates.future;
+  cycleHabitStatus(String docId, String status) {
+    switch (status) {
+      case 'future':
+        widget.databaseService.setHabitCompletionStatus(docId, 'partial');
+        widget.databaseService
+            .onHabitStatusChanged(docId, '', 'partially_completed');
+        break;
+      case 'partial':
+        widget.databaseService.setHabitCompletionStatus(docId, 'done');
+        widget.databaseService
+            .onHabitStatusChanged(docId, 'partially_completed', 'completed');
+        break;
+      case 'done':
+        widget.databaseService.setHabitCompletionStatus(docId, 'failed');
+        widget.databaseService
+            .onHabitStatusChanged(docId, 'completed', 'failed');
+        break;
+      case 'failed':
+        widget.databaseService.setHabitCompletionStatus(docId, 'excused');
+        widget.databaseService.onHabitStatusChanged(docId, 'failed', 'excused');
+        break;
+      case 'excused':
+        widget.databaseService.setHabitCompletionStatus(docId, 'future');
+        widget.databaseService.onHabitStatusChanged(docId, 'excused', '');
+        break;
+      case 'notToday':
+        widget.databaseService.setHabitCompletionStatus(docId, 'future');
+        break;
+      default:
+        return 'error';
+    }
+  }
 
-  void cycleHabitStatus() => setState(() {
-        switch (status) {
-          case HabitStates.future:
-            status = HabitStates.partial;
-            break;
-          case HabitStates.partial:
-            status = HabitStates.done;
-            break;
-          case HabitStates.done:
-            status = HabitStates.failed;
-            break;
-          case HabitStates.failed:
-            status = HabitStates.excused;
-            break;
-          case HabitStates.excused:
-            status = HabitStates.future;
-            break;
-          case HabitStates.notToday:
-            status = HabitStates.future;
-            break;
-        }
-      });
-
-  void toggleHabitToday() => setState(() => status == HabitStates.notToday
-      ? status = HabitStates.future
-      : status = HabitStates.notToday);
+  void toggleHabitToday(String docId, String status) {
+    switch (status) {
+      case 'partial':
+        widget.databaseService
+            .onHabitStatusChanged(docId, 'partially_completed', '');
+        break;
+      case 'done':
+        widget.databaseService.onHabitStatusChanged(docId, 'completed', '');
+        break;
+      case 'failed':
+        widget.databaseService.onHabitStatusChanged(docId, 'failed', '');
+        break;
+      case 'excused':
+        widget.databaseService.onHabitStatusChanged(docId, 'excused', '');
+        break;
+    }
+    status == 'notToday' ? status = 'future' : status = 'notToday';
+    widget.databaseService.setHabitCompletionStatus(docId, status);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: 3,
-      itemBuilder: (context, i) {
-        return HabitCard(
-          habit: 'Cold Shower',
-          status: status,
-          cycleStatus: cycleHabitStatus,
-          toggleHabitToday: toggleHabitToday,
+    return StreamProvider<List<HabitCompletionInfo>>.value(
+      initialData: const [],
+      value: widget.databaseService.habitCompletion,
+      builder: (context, child) {
+        List<HabitCompletionInfo> habitCompletion =
+            Provider.of<List<HabitCompletionInfo>>(context);
+        return ListView.separated(
+          itemCount: habitCompletion.length,
+          itemBuilder: (context, i) {
+            return HabitCard(
+              docId: habitCompletion[i].docId!,
+              habit: habitCompletion[i].name,
+              status: habitCompletion[i].status,
+              cycleStatus: cycleHabitStatus,
+              toggleHabitToday: toggleHabitToday,
+            );
+          },
+          separatorBuilder: (context, i) => const SizedBox(height: 10),
         );
       },
-      separatorBuilder: (context, i) => const SizedBox(height: 10),
     );
   }
 }
@@ -61,33 +96,33 @@ class _DailyHabitsState extends State<DailyHabits> {
 class HabitCard extends StatelessWidget {
   const HabitCard({
     Key? key,
+    required this.docId,
     required this.habit,
     required this.status,
     required this.cycleStatus,
     required this.toggleHabitToday,
   }) : super(key: key);
 
+  final String docId;
   final String habit;
-  final HabitStates status;
+  final String status;
   final Function cycleStatus;
   final Function toggleHabitToday;
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
-      onPressed: () => cycleStatus(),
-      onLongPress: () => toggleHabitToday(),
+      onPressed: () => cycleStatus(docId, status),
+      onLongPress: () => toggleHabitToday(docId, status),
       style: TextButton.styleFrom(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        backgroundColor: status == HabitStates.notToday
+        backgroundColor: status == 'notToday'
             ? const Color(0x30ffffff)
             : const Color(0x38ffffff),
-        primary: status == HabitStates.notToday
-            ? const Color(0x30ffffff)
-            : Colors.white,
+        primary: status == 'notToday' ? const Color(0x30ffffff) : Colors.white,
       ),
       child: AbsorbPointer(
         child: Row(
@@ -105,18 +140,18 @@ class HabitCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: () {
                         switch (status) {
-                          case HabitStates.notToday:
+                          case 'notToday':
                             return Colors.transparent;
-                          case HabitStates.done:
+                          case 'done':
                             return CheckboxColors.green
                                 .withOpacity(CheckboxColors.innerOpacity);
-                          case HabitStates.partial:
+                          case 'partial':
                             return CheckboxColors.blue
                                 .withOpacity(CheckboxColors.innerOpacity);
-                          case HabitStates.failed:
+                          case 'failed':
                             return CheckboxColors.red
                                 .withOpacity(CheckboxColors.innerOpacity);
-                          case HabitStates.excused:
+                          case 'excused':
                             return CheckboxColors.yellow
                                 .withOpacity(CheckboxColors.innerOpacity);
                           default:
@@ -127,18 +162,18 @@ class HabitCard extends StatelessWidget {
                       border: Border.all(
                         color: () {
                           switch (status) {
-                            case HabitStates.notToday:
+                            case 'notToday':
                               return Colors.transparent;
-                            case HabitStates.done:
+                            case 'done':
                               return CheckboxColors.green
                                   .withOpacity(CheckboxColors.outlineOpacity);
-                            case HabitStates.partial:
+                            case 'partial':
                               return CheckboxColors.blue
                                   .withOpacity(CheckboxColors.outlineOpacity);
-                            case HabitStates.failed:
+                            case 'failed':
                               return CheckboxColors.red
                                   .withOpacity(CheckboxColors.outlineOpacity);
-                            case HabitStates.excused:
+                            case 'excused':
                               return CheckboxColors.yellow
                                   .withOpacity(CheckboxColors.outlineOpacity);
                             default:
@@ -150,7 +185,7 @@ class HabitCard extends StatelessWidget {
                     ),
                   ),
                   Visibility(
-                    visible: status == HabitStates.done,
+                    visible: status == 'done',
                     child: const Align(
                       alignment: Alignment(1, -0.5),
                       child: Icon(

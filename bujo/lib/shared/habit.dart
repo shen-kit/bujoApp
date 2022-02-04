@@ -27,3 +27,15 @@ class HabitInfo {
     required this.order,
   });
 }
+
+class HabitCompletionInfo {
+  final String? docId;
+  final String name;
+  final String status;
+
+  HabitCompletionInfo({
+    this.docId,
+    required this.name,
+    required this.status,
+  });
+}

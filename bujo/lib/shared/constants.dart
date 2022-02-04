@@ -17,8 +17,6 @@ const textInputDecoration = InputDecoration(
 
 const textInputStyle = TextStyle(); //color: Colors.black);
 
-enum HabitStates { future, done, partial, failed, excused, notToday }
-
 class CheckboxColors {
   const CheckboxColors();
 

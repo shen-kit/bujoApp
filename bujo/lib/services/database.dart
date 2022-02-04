@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
 
+import 'dart:io';
+
 import 'package:bujo/shared/event.dart';
 import 'package:bujo/shared/habit.dart';
 import 'package:bujo/shared/todo.dart';
@@ -331,6 +333,14 @@ class DatabaseService {
     });
   }
 
+  Future updateHabit(HabitInfo habit) async {
+    await userDoc.collection('habits').doc(habit.docId).update({
+      'name': habit.name,
+      'description': habit.description,
+      'partial_requirement': habit.partialRequirement,
+    });
+  }
+
   List<List<HabitInfo>> _habitsFromSnapshot(QuerySnapshot snapshot) {
     List<HabitInfo> current = [];
     List<HabitInfo> finished = [];
@@ -346,6 +356,7 @@ class DatabaseService {
         startDate: doc['start_date'].toDate(),
         endDate: doc['end_date']?.toDate(),
         order: doc['order'],
+        docId: doc.id,
       );
 
       if (doc['end_date'] == null) {
@@ -367,6 +378,176 @@ class DatabaseService {
         .map(_habitsFromSnapshot);
   }
 
+  Future finishHabit(String docId) async {
+    await userDoc.collection('habits').doc(docId).update({
+      'end_date': dateFromDateTime(DateTime.now()),
+    });
+  }
+
+  Future deleteHabit(String docId) async {
+    DocumentSnapshot habitDoc =
+        await userDoc.collection('habits').doc(docId).get();
+
+    DateTime startDate = habitDoc['start_date'].toDate();
+    DateTime endDate = habitDoc['end_date'].toDate();
+
+    int daysCount = endDate.difference(startDate).inDays;
+
+    // go through all dates between start and end to delete habit completion
+    for (var i = 0; i < daysCount; i++) {
+      DateTime date = startDate.add(Duration(days: i));
+      int offset = dateFromDateTime(DateTime.now()).difference(date).inDays;
+
+      await userDoc
+          .collection('days')
+          .doc(formatDate(offset))
+          .collection('habit_completion')
+          .doc(docId)
+          .delete();
+    }
+
+    // delete habit
+    await userDoc.collection('habits').doc(docId).delete();
+  }
+
+  Future onHabitStatusChanged(
+      String docId, String changedFrom, String changedTo) async {
+    if (changedFrom.isNotEmpty) {
+      int initial =
+          (await userDoc.collection('habits').doc(docId).get())[changedFrom];
+      // subtract one from changedFrom
+      await userDoc
+          .collection('habits')
+          .doc(docId)
+          .update({changedFrom: --initial});
+    }
+
+    if (changedTo.isNotEmpty) {
+      // add one to changedTo
+      int initial =
+          (await userDoc.collection('habits').doc(docId).get())[changedTo];
+      await userDoc
+          .collection('habits')
+          .doc(docId)
+          .update({changedTo: ++initial});
+    }
+  }
+
   //#endregion Habits
+
+  //#region Daily Habits
+
+  Future<List<HabitInfo>> getCurrentHabits(int _dateOffset) async {
+    // get habit documents without an end date and that started before this date
+    QuerySnapshot snapshot = await userDoc
+        .collection('habits')
+        // .orderBy('order')
+        .where('end_date', isNull: true)
+        .where(
+          'start_date',
+          isLessThanOrEqualTo: dateFromDateTime(
+            DateTime.now().add(Duration(days: _dateOffset)),
+          ),
+        )
+        .get();
+
+    return snapshot.docs
+        .map(
+          (doc) => HabitInfo(
+            name: doc['name'],
+            description: '',
+            partialRequirement: '',
+            completed: doc['completed'],
+            partiallyCompleted: doc['partially_completed'],
+            failed: doc['failed'],
+            excused: doc['excused'],
+            startDate: doc['start_date'].toDate(),
+            endDate: null,
+            order: doc['order'],
+            docId: doc.id,
+          ),
+        )
+        .toList();
+  }
+
+  // return true if added at least 1 doc, keep iterating
+  Future<bool> addHabitCompletionDocs(int _dateOffset) async {
+    List<HabitInfo> currentHabits = await getCurrentHabits(_dateOffset);
+
+    bool added = false;
+    for (var habit in currentHabits) {
+      // if a doc for this habit already exists, skip it
+      if ((await userDoc
+              .collection('days')
+              .doc(formatDate(_dateOffset))
+              .collection('habit_completion')
+              .get())
+          .docs
+          .map((e) => e.id)
+          .toList()
+          .contains(habit.docId)) {
+        continue;
+      }
+
+      userDoc
+          .collection('days')
+          .doc(formatDate(_dateOffset))
+          .collection('habit_completion')
+          .doc(habit.docId)
+          .set(
+        {
+          'name': habit.name,
+          'status': 'future',
+        },
+      );
+
+      added = true;
+    }
+    if (added) return true;
+    return false;
+  }
+
+  Future addHabitCompletionUntilToday() async {
+    int _dateOffset = 0;
+    bool iterate = true;
+    do {
+      await createDateIfNotExist(_dateOffset);
+      iterate = await addHabitCompletionDocs(_dateOffset);
+      _dateOffset--;
+    } while (iterate);
+  }
+
+  List<HabitCompletionInfo> _habitCompletionFromSnapshot(
+      QuerySnapshot snapshot) {
+    return snapshot.docs
+        .map(
+          (doc) => HabitCompletionInfo(
+            docId: doc.id,
+            name: doc['name'],
+            status: doc['status'],
+          ),
+        )
+        .toList();
+  }
+
+  Stream<List<HabitCompletionInfo>> get habitCompletion {
+    return userDoc
+        .collection('days')
+        .doc(formatDate(dateOffset))
+        .collection('habit_completion')
+        .snapshots()
+        .map(_habitCompletionFromSnapshot);
+  }
+
+  Future setHabitCompletionStatus(String docId, String status) async {
+    await userDoc
+        .collection('days')
+        .doc(formatDate(dateOffset))
+        .collection('habit_completion')
+        .doc(docId)
+        .update({'status': status});
+  }
+
+  //#endregion Daily Habits
 
 }

@@ -19,7 +19,7 @@ class Habits extends StatefulWidget {
 class _HabitsState extends State<Habits> {
   final _formKey = GlobalKey<FormState>();
 
-  final DatabaseService _databaseService = DatabaseService();
+  final DatabaseService databaseService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +77,7 @@ class _HabitsState extends State<Habits> {
                     DateTime now = DateTime.now();
 
                     HabitInfo newHabitInfo = HabitInfo(
+                      docId: habit?.docId,
                       name: habitNameController.text,
                       description: habitDescriptionController.text,
                       partialRequirement: partialRequirementController.text,
@@ -92,9 +93,9 @@ class _HabitsState extends State<Habits> {
 
                     // new habit
                     if (habit == null) {
-                      await _databaseService.addHabit(newHabitInfo);
+                      await databaseService.addHabit(newHabitInfo);
                     } else {
-                      // await _databaseService.updateHabit(newHabitInfo);
+                      await databaseService.updateHabit(newHabitInfo);
                     }
 
                     Navigator.pop(context);
@@ -110,7 +111,7 @@ class _HabitsState extends State<Habits> {
 
     return StreamProvider<List<List<HabitInfo>>>.value(
       initialData: const [[], []],
-      value: _databaseService.habits,
+      value: databaseService.habits,
       builder: (context, child) {
         List<HabitInfo> currentHabits =
             Provider.of<List<List<HabitInfo>>>(context)[0];
@@ -142,7 +143,7 @@ class _HabitsState extends State<Habits> {
                       ),
                     );
                   }
-                  return HabitCard(
+                  return HabitCard(databaseService,
                       habit: i < currentHabits.length + 1
                           ? currentHabits[i - 1]
                           : finishedHabits[i - currentHabits.length - 2],
@@ -165,7 +166,8 @@ class _HabitsState extends State<Habits> {
 }
 
 class HabitCard extends StatelessWidget {
-  const HabitCard({
+  const HabitCard(
+    this.databaseService, {
     Key? key,
     required this.habit,
     required this.showEditPanel,
@@ -173,11 +175,15 @@ class HabitCard extends StatelessWidget {
 
   final HabitInfo habit;
   final Function showEditPanel;
+  final DatabaseService databaseService;
 
   @override
   Widget build(BuildContext context) {
     String successPercentage =
-        (habit.completed / (habit.completed + habit.failed) * 100).toString();
+        ((habit.completed + (habit.partiallyCompleted / 2)) /
+                (habit.completed + habit.failed + habit.partiallyCompleted) *
+                100)
+            .toString();
     if (successPercentage.length > 4) {
       successPercentage = successPercentage.substring(0, 4);
     }
@@ -193,23 +199,32 @@ class HabitCard extends StatelessWidget {
         key: UniqueKey(),
         endActionPane: ActionPane(
           motion: const ScrollMotion(),
-          extentRatio: 0.2,
+          extentRatio: habit.endDate != null ? 0.2 : 0.4,
           children: [
-            habit.endDate != null
-                ? SlidableAction(
-                    icon: Icons.delete,
-                    backgroundColor: Colors.red,
-                    onPressed: (context) {},
-                  )
-                : SlidableAction(
-                    icon: Icons.flag_rounded,
-                    backgroundColor: Colors.red,
-                    onPressed: (context) {},
-                  )
+            if (habit.endDate == null)
+              SlidableAction(
+                icon: Icons.flag_rounded,
+                backgroundColor: Colors.deepOrangeAccent,
+                onPressed: (context) =>
+                    databaseService.finishHabit(habit.docId!),
+              ),
+            SlidableAction(
+              icon: Icons.delete,
+              backgroundColor: Colors.red,
+              onPressed: (context) => databaseService.deleteHabit(habit.docId!),
+            ),
           ],
         ),
         child: TextButton(
-          onPressed: () {},
+          onPressed: () {
+            // show detailed habit info
+            showDialog(
+              context: context,
+              builder: (context) {
+                return DetailedHabitInfo(habit);
+              },
+            );
+          },
           onLongPress: () => showEditPanel(habit),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(), // set border radius = 0
@@ -285,6 +300,104 @@ class HabitCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// description + partial requirement
+/// total completed + partial + failed + excused
+/// percentage success + streak
+class DetailedHabitInfo extends StatelessWidget {
+  const DetailedHabitInfo(this.habit, {Key? key}) : super(key: key);
+
+  final HabitInfo habit;
+
+  @override
+  Widget build(BuildContext context) {
+    // N/A if just started the habit
+    String successPercentage =
+        habit.completed + habit.failed + habit.partiallyCompleted == 0
+            ? 'N/A'
+            : ((habit.completed + (habit.partiallyCompleted / 2)) /
+                    (habit.completed +
+                        habit.failed +
+                        habit.partiallyCompleted) *
+                    100)
+                .toString();
+
+    return AlertDialog(
+      backgroundColor: Colors.deepPurple,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      title: Text(habit.name),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Description',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            habit.description,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Partial Requirement',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            habit.partialRequirement.isEmpty ? 'N/A' : habit.partialRequirement,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+          ),
+          const Divider(),
+          const SizedBox(height: 5),
+          HabitInfoRow(heading: 'Completed', data: habit.completed.toString()),
+          const SizedBox(height: 5),
+          HabitInfoRow(
+            heading: 'Partially Completed',
+            data: habit.partiallyCompleted.toString(),
+          ),
+          const SizedBox(height: 5),
+          HabitInfoRow(heading: 'Failed', data: habit.failed.toString()),
+          const SizedBox(height: 5),
+          HabitInfoRow(heading: 'Excused', data: habit.excused.toString()),
+          const Divider(),
+          HabitInfoRow(heading: 'Percentage Success', data: successPercentage),
+          const SizedBox(height: 5),
+          HabitInfoRow(
+            heading: 'Streak',
+            data: habit.streak?.toString() ?? '0',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HabitInfoRow extends StatelessWidget {
+  const HabitInfoRow({required this.heading, required this.data, Key? key})
+      : super(key: key);
+
+  final String heading;
+  final String data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          heading,
+          style: const TextStyle(fontSize: 14),
+        ),
+        Text(
+          data,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+        ),
+      ],
     );
   }
 }
